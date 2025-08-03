@@ -1,5 +1,5 @@
 [package]
-name = "doris"
+name = "doris-rs"
 version = "0.0.1-alpha"
 license = "MPL-2.0"
 authors = ["Guillaume W. Bres <guillaume.bressaix@gmail.com>"]
