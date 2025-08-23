@@ -26,7 +26,6 @@ impl std::fmt::Display for Frequency {
     }
 }
 
-
 impl Frequency {
     /// Returns frequency value in Hertz
     pub fn frequency_hz(&self) -> f64 {
@@ -45,10 +44,9 @@ mod test {
     #[test]
     fn frequency_parsing() {
         for (value, expected) in [("1", Frequency::DORIS1), ("2", Frequency::DORIS2)] {
-            let freq = Frequency::from_str(value)
-                .unwrap_or_else(|e| {
-                    panic!("failed to parse frequency from \"{}\"", value);
-                });
+            let freq = Frequency::from_str(value).unwrap_or_else(|e| {
+                panic!("failed to parse frequency from \"{}\"", value);
+            });
 
             assert_eq!(freq, expected, "wrong value for {}", value);
         }

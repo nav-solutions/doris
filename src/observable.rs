@@ -1,7 +1,7 @@
 use crate::prelude::{Error, ParsingError};
 
 #[cfg(feature = "serde", derive(Serialize, Deserialize))]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// [Observable] describes both frequency and physics.
 /// For example, [Observable::PhaseRange] and [Observable::Power] are two different physics.
@@ -12,7 +12,7 @@ use serde::{Serialize, Deserialize};
 pub enum Observable {
     /// Carrier phase observation (in meters, not cycles)
     PhaseRange(Frequency),
-    
+
     /// Decoded Pseudo range (in meters)
     PseudoRange(Frequency),
 
@@ -42,14 +42,8 @@ impl Observable {
     /// Returns true if both [Observable]s come from the same [Frequency]
     pub fn same_frequency(&self, rhs: &Observable) -> bool {
         match self {
-            Self::PseudoRange(freq) |
-            Self::Power(freq) |
-            Self::PhaseRange(freq) => match rhs {
-                Self::PseudoRange(rhs) 
-                | Self::Power(rhs)
-                | Self::PhaseRange(rhs) => {
-                    rhs == freq
-                },
+            Self::PseudoRange(freq) | Self::Power(freq) | Self::PhaseRange(freq) => match rhs {
+                Self::PseudoRange(rhs) | Self::Power(rhs) | Self::PhaseRange(rhs) => rhs == freq,
             },
             _ => false,
         }
@@ -124,20 +118,22 @@ impl std::str::FromStr for Observable {
 
 #[cfg(test)]
 mod test {
+    use crate::prelude::{Frequency, Observable};
     use std::str::FromStr;
-    use crate::prelude::{Observable, Frequency};
-    
+
     #[test]
     fn test_default_observable() {
         let default = Observable::default();
-        assert_eq!(Observable::default(), Observable::PhaseRange(Frequency::DORIS1));
+        assert_eq!(
+            Observable::default(),
+            Observable::PhaseRange(Frequency::DORIS1)
+        );
 
         let formatted = default.to_string();
-        let parsed = Observable::from_str(formatted)
-            .unwrap_or_else(|e| {
-                panic!("Failed to parse observable from \"{}\"", formatted);
-            });
-    
+        let parsed = Observable::from_str(formatted).unwrap_or_else(|e| {
+            panic!("Failed to parse observable from \"{}\"", formatted);
+        });
+
         assert_eq!(parsed, default);
     }
 

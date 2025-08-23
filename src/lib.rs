@@ -27,12 +27,12 @@ extern crate gnss_rs as gnss;
 extern crate num;
 
 pub mod error;
+pub mod frequency;
 pub mod header;
-pub mod production;
-pub mod record;
 pub mod matcher;
 pub mod observable;
-pub mod frequency;
+pub mod production;
+pub mod record;
 
 mod epoch;
 
@@ -58,11 +58,8 @@ pub type Comments = Vec<String>;
 pub mod prelude {
     // export
     pub use crate::{
-        production::ProductionAttributes,
-        matcher::Matcher,
-        station::GroundStation,
-        observable::Observable,
-        frequency::Frequency,
+        frequency::Frequency, matcher::Matcher, observable::Observable,
+        production::ProductionAttributes, station::GroundStation,
     };
 
     // pub re-export
