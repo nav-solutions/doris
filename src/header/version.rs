@@ -1,20 +1,20 @@
-//! `RINEX` revision description
 use crate::prelude::ParsingError;
 
-/// Version is used to describe RINEX standards revisions.
+/// [Version] describes DORIS files revision.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version {
     /// Version major number
     pub major: u8,
+
     /// Version minor number
     pub minor: u8,
 }
 
 impl Default for Version {
-    /// Builds a default `Version` object
+    /// Builds a default 3.0 DORIS [Version]
     fn default() -> Self {
-        Version::new(4, 0)
+        Version::new(3, 0)
     }
 }
 

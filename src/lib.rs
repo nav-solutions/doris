@@ -28,8 +28,8 @@ extern crate num;
 
 pub mod error;
 pub mod header;
+pub mod production;
 pub mod record;
-pub mod version;
 
 mod epoch;
 
@@ -49,10 +49,12 @@ use itertools::Itertools;
 #[cfg(feature = "flate2")]
 use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 
+/// [Comments] found in DORIS files
+pub type Comments = Vec<String>;
+
 pub mod prelude {
     // export
-    pub use crate::{
-    };
+    pub use crate::production::ProductionAttributes;
 
     // pub re-export
     pub use gnss::prelude::{Constellation, DOMESTrackingPoint, COSPAR, DOMES, SV};
@@ -257,7 +259,7 @@ impl DORIS {
         }
         false
     }
-    
+
     /// Returns [Epoch] Iterator. This applies to all but ANTEX special format,
     /// for which we return null.
     pub fn epoch_iter(&self) -> Box<dyn Iterator<Item = Epoch> + '_> {
