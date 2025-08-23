@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use itertools::Itertools;
 use std::collections::HashMap;
 
+use crate::prelude::{Epoch, Observable, COSPAR, DOMES};
+
 /// DORIS [Header]
 #[derive(Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
