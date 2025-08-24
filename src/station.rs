@@ -2,11 +2,11 @@
 use crate::prelude::DORIS;
 
 #[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::prelude::{ParsingError, DOMES};
+use crate::prelude::{Matcher, ParsingError, DOMES};
 
-//! [DORIS] ground [GroundStation] definition
+/// [GroundStation] definition, observed from DORIS satellites.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GroundStation {
@@ -16,20 +16,30 @@ pub struct GroundStation {
     /// Site name
     pub site: String,
 
-    /// DOMES site identifier
+    /// [DOMES] site identifier
     pub domes: DOMES,
 
-    /// DORIS beacon generation
+    /// [DORIS] beacon generation
     pub beacon_revision: u8,
 
     /// K frequency shift factor
     pub k_frequency_shift: i8,
 
-    /// ID# used in this file indexing
+    /// ID# used in file indexing
     pub(crate) key: u16,
 }
 
 impl GroundStation {
+    /// Returns true if this [GroundStation] is matched by given [Matcher] specs
+    pub fn matches<'a>(&self, matcher: &'a Matcher) -> bool {
+        match matcher {
+            Matcher::ID(code) => self.key == code,
+            Matcher::Site(site) => self.site == site,
+            Matcher::DOMES(domes) => self.domes == domes,
+            Matcher::Code(label) => self.label == label,
+        }
+    }
+
     /// Returns S1 frequency shift for this [GroundStation] in Hertz
     pub fn s1_frequency_shift(&self) -> f64 {
         543.0 * Self::USO_FREQ * (3.0 / 4.0 + 87.0 * self.k_factor as f64 / 5.0 * 2.0_f64.powi(26))

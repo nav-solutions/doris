@@ -1,18 +1,15 @@
-use crate::{
-    antex::Record as AntexRecord, clock::Record as ClockRecord, doris::Record as DorisRecord,
-    meteo::Record as MeteoRecord, navigation::Record as NavRecord,
-    observation::Record as ObservationRecord, prelude::Epoch,
-};
+mod formatting;
+pub mod key;
+mod parsing;
 
 use std::collections::BTreeMap;
+
+use crate::prelude::Comments;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-mod formatting;
-mod parsing;
-
-pub mod key;
+pub use key::Key;
 
 /// [Record] contains all [DORIS] data.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -21,8 +18,8 @@ pub struct Record {
     /// Comments found "as is" during record parsing
     pub comments: Comments,
 
-    /// [Observation]s stored indexed by [Key]
-    pub observations: BTreeMap<Key, Observation>,
+    /// Measurements stored by [Key], unit is dependent on [Observable] (physics)
+    pub observations: BTreeMap<Key, f64>,
 }
 
 impl Record {}

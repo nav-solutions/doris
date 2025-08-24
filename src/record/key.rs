@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 #[cfg(doc)]
-use crate::prelude::Header;
+use crate::prelude::{Header, Observable};
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -11,6 +11,6 @@ pub struct Key {
     /// to truly identify the ground station.
     pub station_id: u16,
 
-    /// [Observable] describes both physics and frequency
+    /// [Observable] describes both physics (measurement unit) and frequency (signal interpretation).
     pub observable: Observable,
 }

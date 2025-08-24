@@ -1,7 +1,7 @@
-use crate::prelude::{Error, ParsingError};
-
-#[cfg(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use crate::{error::ParsingError, frequency::Frequency};
 
 /// [Observable] describes both frequency and physics.
 /// For example, [Observable::PhaseRange] and [Observable::Power] are two different physics.
@@ -44,6 +44,7 @@ impl Observable {
         match self {
             Self::PseudoRange(freq) | Self::Power(freq) | Self::PhaseRange(freq) => match rhs {
                 Self::PseudoRange(rhs) | Self::Power(rhs) | Self::PhaseRange(rhs) => rhs == freq,
+                _ => false,
             },
             _ => false,
         }
@@ -59,6 +60,7 @@ impl Observable {
             Self::Pressure => matches!(rhs, Self::Pressure),
             Self::Temperature => matches!(rhs, Self::Temperature),
             Self::HumidityRate => matches!(rhs, Self::HumidityRate),
+            Self::FrequencyRatio => matches!(rhs, Self::FrequencyRatio),
         }
     }
 
@@ -83,6 +85,7 @@ impl std::fmt::Display for Observable {
             Self::Pressure => write!(f, "Pressure"),
             Self::Temperature => write!(f, "Temperature"),
             Self::HumidityRate => write!(f, "Moisture rate"),
+            Self::FrequencyRatio => write!(f, "Frequency ratio"),
             Self::PseudoRange(freq) => write!(f, "L{}", freq),
             Self::PhaseRange(freq) => write!(f, "C{}", freq),
             Self::Power(freq) => write!(f, "W{}", freq),
@@ -92,6 +95,7 @@ impl std::fmt::Display for Observable {
 
 impl std::str::FromStr for Observable {
     type Err = ParsingError;
+
     fn from_str(content: &str) -> Result<Self, Self::Err> {
         let content = content.to_uppercase();
         let content = content.trim();
@@ -109,7 +113,7 @@ impl std::str::FromStr for Observable {
                 } else if content.starts_with('W') {
                     Ok(Self::Power(frequency))
                 } else {
-                    Err(ParsingError::ObservableParsing)
+                    Err(ParsingError::Observable)
                 }
             },
         }

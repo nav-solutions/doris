@@ -20,8 +20,8 @@ impl From<u8> for Frequency {
 impl std::fmt::Display for Frequency {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::DORIS1 => write!(f, '1'),
-            Self::DORIS2 => write!(f, '2'),
+            Self::DORIS1 => write!(f, "{}", '1'),
+            Self::DORIS2 => write!(f, "{}", '2'),
         }
     }
 }

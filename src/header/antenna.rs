@@ -1,6 +1,6 @@
 //! Receiver and antenna
 use crate::{
-    fmt_rinex,
+    fmt_doris,
     prelude::{FormattingError, COSPAR, SV},
 };
 
@@ -44,13 +44,13 @@ impl Antenna {
         writeln!(
             w,
             "{}",
-            fmt_rinex(&format!("{:<20}{}", self.sn, self.model), "ANT # / TYPE")
+            fmt_doris(&format!("{:<20}{}", self.sn, self.model), "ANT # / TYPE")
         )?;
         if let Some(coords) = &self.coords {
             writeln!(
                 w,
                 "{}",
-                fmt_rinex(
+                fmt_doris(
                     &format!("{:14.4}{:14.4}{:14.4}", coords.0, coords.1, coords.2),
                     "APPROX POSITION XYZ"
                 )
@@ -59,7 +59,7 @@ impl Antenna {
         writeln!(
             w,
             "{}",
-            fmt_rinex(
+            fmt_doris(
                 &format!(
                     "{:14.4}{:14.4}{:14.4}",
                     self.height.unwrap_or(0.0),

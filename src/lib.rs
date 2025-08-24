@@ -16,9 +16,6 @@
 
 extern crate num_derive;
 
-#[macro_use]
-extern crate lazy_static;
-
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
@@ -33,6 +30,7 @@ pub mod matcher;
 pub mod observable;
 pub mod production;
 pub mod record;
+pub mod station;
 
 mod epoch;
 
@@ -52,18 +50,29 @@ use itertools::Itertools;
 #[cfg(feature = "flate2")]
 use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 
+use hifitime::prelude::{Duration, Epoch};
+
+use crate::{error::Error, header::Header, production::ProductionAttributes};
+
 /// [Comments] found in DORIS files
 pub type Comments = Vec<String>;
 
 pub mod prelude {
     // export
     pub use crate::{
-        frequency::Frequency, matcher::Matcher, observable::Observable,
-        production::ProductionAttributes, station::GroundStation,
+        error::{FormattingError, ParsingError},
+        frequency::Frequency,
+        header::{antenna::Antenna, receiver::Receiver, Header},
+        matcher::Matcher,
+        observable::Observable,
+        production::ProductionAttributes,
+        record::{Key, Record},
+        station::GroundStation,
+        Comments,
     };
 
-    // pub re-export
     pub use gnss::prelude::{Constellation, DOMESTrackingPoint, COSPAR, DOMES, SV};
+
     pub use hifitime::{Duration, Epoch, Polynomial, TimeScale, TimeSeries};
 }
 
@@ -274,38 +283,33 @@ impl DORIS {
 
     /// Returns [Observable]s Iterator.
     pub fn observables_iter(&self) -> Box<dyn Iterator<Item = &Observable> + '_> {
-        Box::new(
-            self.signal_observations_iter()
-                .map(|(_, v)| &v.observable)
-                .unique()
-                .sorted(),
-        )
+        Box::new([].into_iter())
+        // self.observations_iter()
+        //     .map(|(_, v)| &v.observable)
+        //     .unique()
+        //     .sorted(),
+    }
+
+    /// Studies actual measurement rate and returns the highest
+    /// value in the histogram as the dominant sampling rate
+    pub fn dominant_sampling_period(&self) -> Option<Duration> {
+        None // TODO
     }
 
     /// Copies and returns new [DORIS] that is the result
-    /// of observation differentiation. See [Self::observations_substract_mut] for more
-    /// information.
+    /// of ground station observation differentiation.
+    /// See [Self::observations_substract_mut] for more information.
     pub fn substract(&self, rhs: &Self) -> Result<Self, Error> {
         let mut s = self.clone();
-        s.observations_substract_mut(rhs)?;
+        s.substract_mut(rhs)?;
         Ok(s)
     }
 
-    /// Modifies [DORIS] in place with observation differentiation
-    /// using the remote (RHS) counterpart, for each identical observation and signal source.
-    ///
-    /// This is currently limited to Observation DORIS. NB:
-    /// - Only matched (differentiated) symbols will remain, any other observations are
-    /// discarded.
-    /// - Output symbols are not compliant with Observation DORIS, this is sort
-    /// of like a "residual" DORIS. Use with care.
-    ///
-    /// This allows analyzing a local clock used as GNSS receiver reference clock
-    /// spread to dual GNSS receiver, by means of phase differential analysis.
+    /// TODO
     pub fn substract_mut(&mut self, rhs: &Self) -> Result<(), Error> {
         let lhs_dt = self
-            .dominant_sampling_interval()
-            .ok_or(Error::UndeterminedSamplingPeriod)?;
+            .dominant_sampling_period()
+            .ok_or(Error::UndeterminedSamplingRate)?;
 
         let half_lhs_dt = lhs_dt / 2.0;
 

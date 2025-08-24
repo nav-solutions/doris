@@ -1,6 +1,6 @@
 //! Receiver and antenna
 use crate::{
-    fmt_rinex,
+    fmt_doris,
     prelude::{FormattingError, COSPAR, SV},
 };
 
@@ -32,7 +32,7 @@ impl Receiver {
         writeln!(
             w,
             "{}",
-            fmt_rinex(
+            fmt_doris(
                 &format!("{:<20}{:<20}{}", self.sn, self.model, self.firmware),
                 "REC # / TYPE / VERS"
             )

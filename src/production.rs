@@ -1,27 +1,7 @@
 use thiserror::Error;
 
-#[derive(Debug, Copy, Default, Clone, PartialEq)]
-pub enum Region {
-    /// Local IONEX (Regional maps)
-    Regional,
-
-    /// Global IONEX (Worldwide maps)
-    #[default]
-    Global,
-}
-
-impl std::fmt::Display for Region {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::Regional => write!(f, "{}", 'R'),
-            Self::Global => write!(f, "{}", 'G'),
-        }
-    }
-}
-
-/// File production attributes. Used when generating
-/// RINEX data that follows standard naming conventions,
-/// or attached to data parsed from such files.
+/// This structure is attached to DORIS file that were named
+/// according to the standard convention.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct ProductionAttributes {
     /// 3 letter satellite name
@@ -30,12 +10,8 @@ pub struct ProductionAttributes {
     /// Year of production
     pub year: u32,
 
-    /// Production Day of Year (DOY).
-    /// We assume past J2000.
+    /// Production Day of Year (DOY), assumed past J2000.
     pub doy: u32,
-
-    /// Regional code present in IONEX file names.
-    pub region: Region,
 
     /// True if this file was gzip compressed
     #[cfg(feature = "flate2")]
@@ -46,35 +22,12 @@ pub struct ProductionAttributes {
 impl std::fmt::Display for ProductionAttributes {
     #[cfg(feature = "flate2")]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let len = std::cmp::min(self.agency.len(), 3);
-
-        write!(
-            f,
-            "{}{}{:03}0.{:02}I",
-            &self.agency[..len],
-            self.region,
-            self.doy,
-            self.year - 2000
-        )?;
-
-        if self.gzip_compressed {
-            write!(f, ".gz")?;
-        }
-
         Ok(())
     }
 
     #[cfg(not(feature = "flate2"))]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let len = std::cmp::min(self.agency.len(), 3);
-        write!(
-            f,
-            "{}{}{:03}0.{:02}I",
-            &self.agency[..len],
-            self.region,
-            self.doy,
-            self.year - 2000
-        )
+        Ok(())
     }
 }
 
@@ -98,21 +51,10 @@ impl std::str::FromStr for ProductionAttributes {
             .parse::<u32>()
             .map_err(|_| Error::NonStandardFilename)?;
 
-        let region = if filename[3..4].eq("G") {
-            Region::Global
-        } else {
-            Region::Regional
-        };
-
         Ok(Self {
-            region,
-            agency,
-            doy: {
-                filename[4..7]
-                    .parse::<u32>()
-                    .map_err(|_| Error::NonStandardFilename)?
-            },
-            year: year + 2_000,
+            satellite,
+            year,
+            doy,
             #[cfg(feature = "flate2")]
             gzip_compressed: filename.ends_with(".GZ"),
         })

@@ -9,34 +9,17 @@ use hifitime::{HifitimeError, ParsingError as HifitimeParsingError};
 
 use std::io::Error as IoError;
 
-use crate::hatanaka::Error as HatanakaError;
-
 /// Errors that may rise when parsing DORIS files
 #[derive(Debug, Error)]
 pub enum ParsingError {
     #[error("header line too short (invalid)")]
     HeaderLineTooShort,
 
-    #[error("empty epoch")]
-    EmptyEpoch,
-
-    #[error("invalid epoch flag")]
-    EpochFlag,
-
-    #[error("number of sat")]
-    NumSat,
-
-    #[error("epoch parsing")]
-    EpochParsing,
-
-    #[error("datime parsing")]
-    DatetimeParsing,
-
     #[error("file version parsing error")]
-    VersionParsing,
+    Version,
 
-    #[error("observable parsing")]
-    ObservableParsing,
+    #[error("observable parsing error")]
+    Observable,
 
     #[error("DOMES site number parsing: {0}")]
     DOMES(#[from] DOMESParsingError),
@@ -46,6 +29,12 @@ pub enum ParsingError {
 
     #[error("station parsing error")]
     DorisStation,
+
+    #[error("epoch error: {0}")]
+    Epoch(#[from] HifitimeError),
+
+    #[error("epoch parsing error: {0}")]
+    EpochParsing(#[from] HifitimeParsingError),
 }
 
 /// Errors that may rise when formatting DORIS files
@@ -53,4 +42,10 @@ pub enum ParsingError {
 pub enum FormattingError {
     #[error("i/o: output error")]
     OutputError(#[from] IoError),
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("failed to determine sampling rate")]
+    UndeterminedSamplingRate,
 }

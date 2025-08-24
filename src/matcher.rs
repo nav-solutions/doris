@@ -21,12 +21,12 @@ pub enum Matcher<'a> {
     /// ```
     Site(String),
 
-    /// Search by 4 letter station code
+    /// Scarch by 4 letter station label
     /// ```
     /// use doris_rs::prelude:*;
     ///
     /// ```
-    Code(String),
+    Label(String),
 
     /// Search by DOMES code
     /// ```

@@ -1,7 +1,9 @@
 use crate::{
-    header::{Antenna, Receiver, Version},
+    error::ParsingError,
+    header::{Antenna, Header, Receiver, Version},
+    observable::Observable,
     prelude::{COSPAR, DOMES},
-    station::Groundstation,
+    station::GroundStation,
     Comments,
 };
 
@@ -25,6 +27,7 @@ impl Header {
         let mut doi = Option::<String>::None;
         let mut receiver = Option::<Receiver>::None;
         let mut antenna = Option::<Antenna>::None;
+        let mut station_url = Option::<String>::None;
 
         let mut observables = Vec::<Observable>::with_capacity(8);
         let mut observable_continuation = false;
@@ -59,58 +62,20 @@ impl Header {
                 let (type_str, rem) = rem.split_at(20);
                 let (constell_str, _) = rem.split_at(20);
 
+                let vers = vers.trim();
                 let type_str = type_str.trim();
                 let constell_str = constell_str.trim();
 
-                // File type identification
-                if type_str == "O" && constell_str == "D" {
-                    rinex_type = Type::DORIS;
-                } else {
-                    rinex_type = Type::from_str(type_str)?;
+                if !type_str.eq('O') {
+                    return Err(ParsingError::InvalidDoris);
                 }
 
-                // Determine (file) Constellation
-                //  1. NAV SPECIAL CASE
-                //  2. OTHER
-                match rinex_type {
-                    Type::NavigationData => {
-                        if type_str.contains("GLONASS") {
-                            // old GLONASS NAV : no constellation field
-                            constellation = Some(Constellation::Glonass);
-                        } else if type_str.contains("GPS NAV DATA") {
-                            constellation = Some(Constellation::GPS);
-                        } else if type_str.contains("IRNSS NAV DATA") {
-                            constellation = Some(Constellation::IRNSS);
-                        } else if type_str.contains("GNSS NAV DATA") {
-                            constellation = Some(Constellation::Mixed);
-                        } else if type_str.eq("NAVIGATION DATA") {
-                            if constell_str.is_empty() {
-                                // old GPS NAVIGATION DATA
-                                constellation = Some(Constellation::GPS);
-                            } else {
-                                // Modern NAVIGATION DATA
-                                if let Ok(c) = Constellation::from_str(constell_str) {
-                                    constellation = Some(c);
-                                }
-                            }
-                        }
-                    },
-                    Type::MeteoData | Type::DORIS => {
-                        // no constellation associated to them
-                    },
-                    _ => {
-                        // any other
-                        // regular files
-                        if let Ok(c) = Constellation::from_str(constell_str) {
-                            constellation = Some(c);
-                        }
-                    },
+                if !constell_str.eq('D') {
+                    return Err(ParsingError::InvalidDoris);
                 }
-                /*
-                 * Parse version descriptor
-                 */
-                let vers = vers.trim();
-                version = Version::from_str(vers).or(Err(ParsingError::VersionParsing))?;
+
+                // version string
+                version = Version::from_str(vers).or(Err(ParsingError::Version))?;
             } else if marker.contains("PGM / RUN BY / DATE") {
                 let (pgm, rem) = line.split_at(20);
                 let pgm = pgm.trim();
@@ -178,8 +143,7 @@ impl Header {
             } else if marker.contains("CENTER OF MASS: XYZ") {
                 // TODO
             } else if marker.contains("APPROX POSITION XYZ") {
-                let mut num_items = 0;
-                let (mut x_ecef_m, mut y_ecef_m, mut z_ecef_m) = (0.0_f64, 0.0_f64, 0.0_f64);
+                let (mut x_ecef_m, mut y_ecef_m) = (0.0_f64, 0.0_f64);
 
                 for (nth, item) in content.split_ascii_whitespace().enumerate() {
                     if let Ok(ecef_m) = item.trim().parse::<f64>() {
@@ -191,16 +155,12 @@ impl Header {
                                 y_ecef_m = ecef_m;
                             },
                             2 => {
-                                num_items = 3;
                                 z_ecef_m = ecef_m;
+                                rx_position = Some((x_ecef_m, y_ecef_m, ecef_m));
                             },
                             _ => {},
                         }
                     }
-                }
-
-                if num_items == 3 {
-                    rx_position = Some((x_ecef_m, y_ecef_m, z_ecef_m));
                 }
             } else if marker.contains("ANT # / TYPE") {
                 let (sn, rem) = content.split_at(20);
@@ -335,124 +295,6 @@ impl Header {
             y, m, d, hh, mm, ss, ns, ts
         ))
         .map_err(|_| ParsingError::DatetimeParsing)
-    }
-
-    /*
-     * Parse IONEX grid
-     */
-    fn parse_grid(line: &str) -> Result<Linspace, ParsingError> {
-        let mut start = 0.0_f64;
-        let mut end = 0.0_f64;
-        let mut spacing = 0.0_f64;
-        for (index, item) in line.split_ascii_whitespace().enumerate() {
-            let item = item.trim();
-            match index {
-                0 => {
-                    start = f64::from_str(item).or(Err(ParsingError::IonexGridSpecs))?;
-                },
-                1 => {
-                    end = f64::from_str(item).or(Err(ParsingError::IonexGridSpecs))?;
-                },
-                2 => {
-                    spacing = f64::from_str(item).or(Err(ParsingError::IonexGridSpecs))?;
-                },
-                _ => {},
-            }
-        }
-        if spacing == 0.0 {
-            // avoid linspace verification in this case
-            Ok(Linspace {
-                start,
-                end,
-                spacing,
-            })
-        } else {
-            let grid = Linspace::new(start, end, spacing)?;
-            Ok(grid)
-        }
-    }
-
-    /// Parse list of [Observable]s which applies to both METEO and OBS RINEX
-    pub(crate) fn parse_v2_observables(
-        line: &str,
-        constell: Option<Constellation>,
-        meteo: &mut MeteoHeader,
-        observation: &mut ObservationHeader,
-    ) {
-        lazy_static! {
-            /*
-             *  We support GPS, Glonass, Galileo, SBAS and BDS as per v2.11.
-             */
-            static ref KNOWN_V2_CONSTELLS: [Constellation; 5] = [
-                Constellation::GPS,
-                Constellation::SBAS,
-                Constellation::Glonass,
-                Constellation::Galileo,
-                Constellation::BeiDou,
-            ];
-        }
-        let line = line.split_at(6).1;
-        for item in line.split_ascii_whitespace() {
-            if let Ok(obs) = Observable::from_str(item.trim()) {
-                match constell {
-                    Some(Constellation::Mixed) => {
-                        for constell in KNOWN_V2_CONSTELLS.iter() {
-                            if let Some(codes) = observation.codes.get_mut(constell) {
-                                codes.push(obs.clone());
-                            } else {
-                                observation.codes.insert(*constell, vec![obs.clone()]);
-                            }
-                        }
-                    },
-                    Some(c) => {
-                        if let Some(codes) = observation.codes.get_mut(&c) {
-                            codes.push(obs.clone());
-                        } else {
-                            observation.codes.insert(c, vec![obs.clone()]);
-                        }
-                    },
-                    None => meteo.codes.push(obs),
-                }
-            }
-        }
-    }
-
-    /// Parse list of [Observable]s which applies to both METEO and OBS RINEX
-    fn parse_v3_observables(
-        line: &str,
-        current_constell: &mut Option<Constellation>,
-        observation: &mut ObservationHeader,
-    ) {
-        let (possible_counter, items) = line.split_at(6);
-        if !possible_counter.is_empty() {
-            let code = &possible_counter[..1];
-            if let Ok(c) = Constellation::from_str(code) {
-                *current_constell = Some(c);
-            }
-        }
-        if let Some(constell) = current_constell {
-            // system correctly identified
-            for item in items.split_ascii_whitespace() {
-                if let Ok(observable) = Observable::from_str(item) {
-                    if let Some(codes) = observation.codes.get_mut(constell) {
-                        codes.push(observable);
-                    } else {
-                        observation.codes.insert(*constell, vec![observable]);
-                    }
-                }
-            }
-        }
-    }
-    /*
-     * Parse list of DORIS observables
-     */
-    fn parse_doris_observables(line: &str, doris: &mut DorisHeader) {
-        let items = line.split_at(6).1;
-        for item in items.split_ascii_whitespace() {
-            if let Ok(observable) = Observable::from_str(item) {
-                doris.observables.push(observable);
-            }
-        }
     }
 }
 

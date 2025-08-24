@@ -1,17 +1,21 @@
 mod formatting;
 mod parsing;
 
-pub mod antenna;
-pub mod receiver;
-pub mod version;
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+mod antenna;
+mod receiver;
+mod version;
 
 use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::prelude::{Epoch, Observable, COSPAR, DOMES};
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+pub use antenna::Antenna;
+pub use receiver::Receiver;
+pub use version::Version;
 
 /// DORIS [Header]
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -73,6 +77,15 @@ pub struct Header {
 }
 
 impl Header {
+    /// Identify a [GroundStation] from [u16] (unique) identification
+    /// code, which is file or network dependent.
+    pub fn ground_station(&self, station_code: u16) -> Option<GroundStation> {
+        self.ground_stations
+            .iter()
+            .filter(|station| station.code == station_code)
+            .reduce(|k, _| k)
+    }
+
     /// Formats the package version (possibly shortenned, in case of lengthy release)
     /// to fit within a formatted COMMENT
     pub(crate) fn format_pkg_version(version: &str) -> String {
@@ -142,13 +155,6 @@ impl Header {
     pub fn with_receiver(&self, receiver: Receiver) -> Self {
         let mut s = self.clone();
         s.receiver = Some(receiver);
-        s
-    }
-
-    /// Copies and returns [Header] with specific [Antenna] information
-    pub fn with_receiver_antenna(&self, a: Antenna) -> Self {
-        let mut s = self.clone();
-        s.rcvr_antenna = Some(a);
         s
     }
 
