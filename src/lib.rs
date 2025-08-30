@@ -35,8 +35,8 @@ pub mod station;
 
 mod epoch;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 use std::{
     collections::HashMap,
