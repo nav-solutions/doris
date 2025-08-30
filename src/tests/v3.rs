@@ -35,6 +35,22 @@ fn v3_cs2rx18164() {
 
     assert_eq!(doris.header.receiver, Some(receiver));
 
+    // Measurements and physics to follow
+    let observables = vec![
+        Observable::PhaseRange(Frequency::DORIS1), // phase, in meters of prop.
+        Observable::PhaseRange(Frequency::DORIS2),
+        Observable::PseudoRange(Frequency::DORIS1), // decoded pseudo range
+        Observable::PseudoRange(Frequency::DORIS2),
+        Observable::Power(Frequency::DORIS1), // received power
+        Observable::Power(Frequency::DORIS2), // received power
+        Observable::FrequencyRatio,           // f1/f2 ratio (=drift image)
+        Observable::Pressure,                 // pressure, at ground station level (hPa)
+        Observable::Temperature,              // temperature, at ground station level (°C)
+        Observable::HumidityRate,             // saturation rate, at ground station level (%)
+    ];
+
+    assert_eq!(doris.header.observables, observables);
+
     // Ground station hardware
     let antenna = Antenna::default()
         .with_model("STAREC")
@@ -76,9 +92,13 @@ fn v3_cs2rx18164() {
 
     assert_eq!(doris.ground_station(domes_matcher), Some(toulouse));
 
+    // Standard file naming convention.
+    // This could help when generating data from scratch.
+    // assert_eq!(doris.standardized_filename(), "cs2rx18164");
+
     // Example: retrieve site observation
 
-    // API makes it easy to format new data
+    // Easy to format new data
     doris.to_gzip_file("formatted.gz").unwrap();
 
     // parse back

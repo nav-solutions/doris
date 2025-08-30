@@ -2,17 +2,17 @@
 use serde::{Deserialize, Serialize};
 
 #[cfg(doc)]
-use crate::prelude::Header;
+use crate::prelude::Measurements;
 
-use crate::prelude::Observable;
+use crate::prelude::{Epoch, GroundStation};
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
+/// [Key] is used to store [GroundStation]s [Measurements] uniquely.
+#[derive(Clone, Debug, Default, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Key {
-    /// ID# of this station. You will have to refer to the [Header] section
-    /// to truly identify the ground station.
-    pub station_id: u16,
+    /// [Epoch] of measurement
+    pub epoch: Epoch,
 
-    /// [Observable] describes both physics (measurement unit) and frequency (signal interpretation).
-    pub observable: Observable,
+    /// [GroundStation] being measured
+    pub station: GroundStation,
 }

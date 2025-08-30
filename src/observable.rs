@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

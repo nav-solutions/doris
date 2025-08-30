@@ -1,8 +1,4 @@
-use crate::{
-    error::ParsingError,
-    fmt_doris,
-    prelude::{FormattingError, COSPAR, SV},
-};
+use crate::{error::ParsingError, fmt_doris, prelude::FormattingError};
 
 use std::{
     io::{BufWriter, Write},

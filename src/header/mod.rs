@@ -9,9 +9,12 @@ use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::{
-    prelude::{Duration, Epoch, GroundStation, Observable, COSPAR, DOMES},
+    prelude::{Duration, Epoch, GroundStation, Observable, COSPAR},
     Comments,
 };
+
+#[cfg(doc)]
+use crate::prelude::Record;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -63,11 +66,14 @@ pub struct Header {
     /// Possible Digital Object Identifier (DOI)
     pub doi: Option<String>,
 
-    /// Possible scalings to apply to attached [Observable]s
-    pub scaling_factors: HashMap<Observable, f64>,
-
     /// DORIS L1/L2 date offset
     pub l1_l2_date_offset: Duration,
+
+    /// Describes measurements contained in following [Record]
+    pub observables: Vec<Observable>,
+
+    /// Possible scalings to apply to attached [Observable]s
+    pub scaling_factors: HashMap<Observable, f64>,
 
     /// DORIS [GroundStation]s
     pub ground_stations: Vec<GroundStation>,

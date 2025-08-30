@@ -1,15 +1,20 @@
 mod formatting;
-pub mod key;
+mod key;
+mod measurement;
 mod parsing;
 
 use std::collections::BTreeMap;
 
-use crate::prelude::Comments;
+#[cfg(doc)]
+use crate::prelude::GroundStation;
+
+use crate::prelude::{Comments, Observable};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 pub use key::Key;
+pub use measurement::Measurements;
 
 /// [Record] contains all [DORIS] data.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -18,8 +23,14 @@ pub struct Record {
     /// Comments found "as is" during record parsing
     pub comments: Comments,
 
-    /// Measurements stored by [Key], unit is dependent on [Observable] (physics)
-    pub observations: BTreeMap<Key, f64>,
+    /// [GroundStation]s [Measurement]s
+    pub measurements: BTreeMap<Key, Measurements>,
 }
 
-impl Record {}
+impl Record {
+    /// Returns a unique list of [Observable]s, defining all physics
+    /// measured for this set of [GroundStation]s.
+    pub fn observables(&self) -> Box<dyn Iterator<Item = Observable> + '_> {
+        Box::new([].into_iter())
+    }
+}

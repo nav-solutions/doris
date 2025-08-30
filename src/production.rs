@@ -1,5 +1,3 @@
-use thiserror::Error;
-
 use crate::error::ParsingError;
 
 /// This structure is attached to DORIS file that were named

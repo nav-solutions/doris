@@ -2,7 +2,7 @@ use crate::{
     error::ParsingError,
     header::{Antenna, Header, Receiver, Version},
     observable::Observable,
-    prelude::{Duration, Epoch, TimeScale, COSPAR, DOMES},
+    prelude::{Duration, Epoch, TimeScale, COSPAR},
     station::GroundStation,
     Comments,
 };
@@ -159,8 +159,16 @@ impl Header {
             } else if marker.contains("TIME OF LAST OBS") {
                 time_of_last_observation = Some(Self::parse_time_of_obs(content)?);
             } else if marker.contains("SYS / # / OBS TYPES") {
-                // Self::parse_observables(content);
-                observables_continuation = true;
+                if observables_continuation {
+                    for item in content.split_ascii_whitespace() {
+                        if let Ok(observable) = Observable::from_str(item) {
+                            observables.push(observable);
+                        }
+                    }
+                } else {
+                    Self::parse_observables(content, &mut observables);
+                    observables_continuation = true;
+                }
             } else if marker.contains("COSPAR NUMBER") {
                 cospar = Some(COSPAR::from_str(content.trim())?);
             } else if marker.contains("L2 / L1 DATE OFFSET") {
@@ -195,10 +203,20 @@ impl Header {
             satellite,
             scaling_factors,
             l1_l2_date_offset,
+            observables,
             ground_stations,
             time_of_first_observation,
             time_of_last_observation,
         })
+    }
+
+    fn parse_observables(line: &str, observables: &mut Vec<Observable>) {
+        let items = line.split_at(6).1;
+        for item in items.split_ascii_whitespace() {
+            if let Ok(observable) = Observable::from_str(item) {
+                observables.push(observable);
+            }
+        }
     }
 
     fn parse_time_of_obs(content: &str) -> Result<Epoch, ParsingError> {

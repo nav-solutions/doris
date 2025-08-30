@@ -1,10 +1,6 @@
 //! RINEX header formatting
 
-use crate::{
-    fmt_comment, fmt_doris,
-    header::Header,
-    prelude::{Constellation, FormattingError},
-};
+use crate::{fmt_comment, fmt_doris, header::Header, prelude::FormattingError};
 
 use std::io::{BufWriter, Write};
 

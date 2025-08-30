@@ -1,12 +1,6 @@
-use crate::{
-    fmt_doris,
-    prelude::{FormattingError, COSPAR, SV},
-};
+use crate::{fmt_doris, prelude::FormattingError};
 
-use std::{
-    io::{BufWriter, Write},
-    str::FromStr,
-};
+use std::io::{BufWriter, Write};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

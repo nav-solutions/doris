@@ -1,9 +1,6 @@
 use thiserror::Error;
 
-use gnss_rs::{
-    constellation::ParsingError as ConstellationParsingError, cospar::Error as CosparParsingError,
-    domes::Error as DOMESParsingError, sv::ParsingError as SVParsingError,
-};
+use gnss_rs::{cospar::Error as CosparParsingError, domes::Error as DOMESParsingError};
 
 use hifitime::{HifitimeError, ParsingError as HifitimeParsingError};
 
@@ -53,6 +50,12 @@ pub enum ParsingError {
 
     #[error("not a standardized file name")]
     NonStandardFileName,
+
+    #[error("failed to parse station clock offset")]
+    ClockOffset,
+
+    #[error("invalid station format")]
+    StationFormat,
 }
 
 /// Errors that may rise when formatting DORIS files

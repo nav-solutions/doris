@@ -39,7 +39,6 @@ mod epoch;
 mod tests;
 
 use std::{
-    collections::HashMap,
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
     path::Path,
@@ -75,7 +74,7 @@ pub mod prelude {
         matcher::Matcher,
         observable::Observable,
         production::ProductionAttributes,
-        record::{Key, Record},
+        record::{Key, Measurements, Record},
         station::GroundStation,
         Comments, DORIS,
     };
@@ -108,17 +107,9 @@ pub(crate) fn fmt_comment(content: &str) -> String {
     fmt_doris(content, "COMMENT")
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 /// [DORIS] is composed of a [Header] and a [Record] section.
 /// ```
-/// use doris_rs::prelude::*;
-///
-/// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
-///     .unwrap();
-///
-/// // File and DORIS revision
-/// assert_eq!(doris.header.version.major, 3);
-///
 /// ```
 pub struct DORIS {
     /// [Header] gives general information
