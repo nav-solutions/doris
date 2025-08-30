@@ -21,7 +21,8 @@ References:
 - [RINEX format (Wikipedia)](https://en.wikipedia.org/wiki/RINEX) 
 - DORIS format
 
-To contribute to either of our project or join our community, you way
+To contribute or join our community, you may:
+
 - open an [Issue on Github.com](https://github.com/nav-solutions/doris/issues) 
 - follow our [Discussions on Github.com](https://github.com/nav-solutions/discussions)
 - join our [Discord channel](https://discord.gg/EqhEBXBmJh)
