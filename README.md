@@ -1,13 +1,13 @@
 DORIS
 =====
 
-[![Rust](https://github.com/nav-solutions/rinex/actions/workflows/rust.yml/badge.svg)](https://github.com/nav-solutions/rinex/actions/workflows/rust.yml)
-[![Rust](https://github.com/nav-solutions/rinex/actions/workflows/daily.yml/badge.svg)](https://github.com/nav-solutions/rinex/actions/workflows/daily.yml)
-[![crates.io](https://docs.rs/rinex/badge.svg)](https://docs.rs/rinex/)
-[![crates.io](https://img.shields.io/crates/d/rinex.svg)](https://crates.io/crates/rinex)
+[![Rust](https://github.com/nav-solutions/doris/actions/workflows/rust.yml/badge.svg)](https://github.com/nav-solutions/doris/actions/workflows/rust.yml)
+[![Rust](https://github.com/nav-solutions/doris/actions/workflows/daily.yml/badge.svg)](https://github.com/nav-solutions/doris/actions/workflows/daily.yml)
+[![crates.io](https://docs.rs/doris/badge.svg)](https://docs.rs/doris/)
+[![crates.io](https://img.shields.io/crates/d/doris.svg)](https://crates.io/crates/doris)
 
 [![MRSV](https://img.shields.io/badge/MSRV-1.82.0-orange?style=for-the-badge)](https://github.com/rust-lang/rust/releases/tag/1.82.0)
-[![License](https://img.shields.io/badge/license-MPL_2.0-orange?style=for-the-badge&logo=mozilla)](https://github.com/nav-solutions/rinex/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MPL_2.0-orange?style=for-the-badge&logo=mozilla)](https://github.com/nav-solutions/doris/blob/main/LICENSE)
 
 `doris-rs` is dedicated to DORIS (special RINEX) files parsing, processing
 and production.
@@ -22,7 +22,7 @@ References:
 - DORIS format
 
 To contribute to either of our project or join our community, you way
-- open an [Issue on Github.com](https://github.com/nav-solutions/rinex/issues) 
+- open an [Issue on Github.com](https://github.com/nav-solutions/doris/issues) 
 - follow our [Discussions on Github.com](https://github.com/nav-solutions/discussions)
 - join our [Discord channel](https://discord.gg/EqhEBXBmJh)
 
@@ -31,7 +31,7 @@ To contribute to either of our project or join our community, you way
 - Fast
 - Limited to DORIS exclusively, 
 other RINEX-like formats have their own parser:
-  - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/rinex)
+  - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
   - [IONEX maps](https://github.com/nav-solutions/ionex)
 
 ## Citation and referencing
