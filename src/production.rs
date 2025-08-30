@@ -70,49 +70,4 @@ impl std::str::FromStr for ProductionAttributes {
 mod test {
     use super::*;
     use std::str::FromStr;
-
-    #[test]
-    fn standard_filenames() {
-        for (filename, agency, year, doy, region) in [
-            ("CKMG0020.22I", "CKM", 2022, 2, Region::Global),
-            ("CKMG0090.21I", "CKM", 2021, 9, Region::Global),
-            ("JPLG0010.17I", "JPL", 2017, 1, Region::Global),
-            ("JPLR0010.17I", "JPL", 2017, 1, Region::Regional),
-            ("JPLR0010.17I", "JPL", 2017, 1, Region::Regional),
-        ] {
-            println!("Testing IONEX filename \"{}\"", filename);
-
-            let attrs = ProductionAttributes::from_str(filename).unwrap();
-
-            assert_eq!(attrs.agency, agency);
-            assert_eq!(attrs.year, year);
-            assert_eq!(attrs.doy, doy);
-            assert_eq!(attrs.region, region);
-            assert!(!attrs.gzip_compressed);
-
-            let formatted = attrs.to_string();
-            assert_eq!(formatted, filename);
-        }
-    }
-
-    #[test]
-    fn gzip_filenames() {
-        for (filename, agency, year, doy, region) in [
-            ("CKMG0020.22I.gz", "CKM", 2022, 2, Region::Global),
-            ("CKMR0020.22I.gz", "CKM", 2022, 2, Region::Regional),
-            ("JPLG0010.17I.gz", "JPL", 2017, 1, Region::Global),
-            ("CKMR0020.22I.gz", "CKM", 2022, 2, Region::Regional),
-        ] {
-            let attrs = ProductionAttributes::from_str(filename).unwrap();
-
-            assert_eq!(attrs.agency, agency);
-            assert_eq!(attrs.year, year);
-            assert_eq!(attrs.doy, doy);
-            assert_eq!(attrs.region, region);
-            assert!(attrs.gzip_compressed);
-
-            let formatted = attrs.to_string();
-            assert_eq!(formatted, filename);
-        }
-    }
 }

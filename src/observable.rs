@@ -136,7 +136,8 @@ mod test {
         );
 
         let formatted = default.to_string();
-        let parsed = Observable::from_str(formatted).unwrap_or_else(|e| {
+
+        let parsed = Observable::from_str(&formatted).unwrap_or_else(|e| {
             panic!("Failed to parse observable from \"{}\"", formatted);
         });
 
@@ -144,136 +145,41 @@ mod test {
     }
 
     #[test]
-    fn test_physics() {
-        assert!(Observable::from_str("L1")
-            .unwrap()
-            .is_phase_range_observable());
-        assert!(Observable::from_str("L2")
-            .unwrap()
-            .is_phase_range_observable());
-        assert!(Observable::from_str("L6X")
-            .unwrap()
-            .is_phase_range_observable());
-        assert!(Observable::from_str("C1")
-            .unwrap()
-            .is_pseudo_range_observable());
-        assert!(Observable::from_str("C2")
-            .unwrap()
-            .is_pseudo_range_observable());
-        assert!(Observable::from_str("C6X")
-            .unwrap()
-            .is_pseudo_range_observable());
-        assert!(Observable::from_str("D1").unwrap().is_doppler_observable());
-        assert!(Observable::from_str("D2").unwrap().is_doppler_observable());
-        assert!(Observable::from_str("D6X").unwrap().is_doppler_observable());
-        assert!(Observable::from_str("S1").unwrap().is_ssi_observable());
-        assert!(Observable::from_str("S2").unwrap().is_ssi_observable());
-        assert!(Observable::from_str("S1P").unwrap().is_ssi_observable());
-        assert!(Observable::from_str("S1W").unwrap().is_ssi_observable());
-    }
-    #[test]
-    fn test_observable() {
-        assert_eq!(Observable::from_str("PR").unwrap(), Observable::Pressure);
-        assert_eq!(Observable::from_str("pr").unwrap(), Observable::Pressure);
-        assert_eq!(Observable::from_str("PR").unwrap().to_string(), "PR");
+    fn observable_parsing() {
+        for (observable, expected) in [
+            ("L1", Observable::PhaseRange(Frequency::DORIS1)),
+            ("L2", Observable::PhaseRange(Frequency::DORIS2)),
+            ("C1", Observable::PseudoRange(Frequency::DORIS1)),
+            ("C2", Observable::PseudoRange(Frequency::DORIS2)),
+            ("W1", Observable::Power(Frequency::DORIS1)),
+            ("W2", Observable::Power(Frequency::DORIS2)),
+            ("T", Observable::Temperature),
+            ("P", Observable::Pressure),
+            ("H", Observable::HumidityRate),
+        ] {
+            let parsed = Observable::from_str(observable).unwrap_or_else(|e| {
+                panic!("failed to parse observable from \"{}\": {}", observable, e);
+            });
 
-        assert_eq!(Observable::from_str("WS").unwrap(), Observable::WindSpeed);
-        assert_eq!(Observable::from_str("ws").unwrap(), Observable::WindSpeed);
-        assert_eq!(Observable::from_str("WS").unwrap().to_string(), "WS");
+            assert_eq!(parsed, expected);
 
-        assert!(Observable::from_str("Err").is_err());
-        assert!(Observable::from_str("TODO").is_err());
+            let formatted = parsed.to_string();
 
-        assert_eq!(
-            Observable::from_str("L1").unwrap(),
-            Observable::PhaseRange(String::from("L1"))
-        );
+            assert_eq!(formatted, observable);
+        }
 
-        assert!(Observable::from_str("L1").unwrap().code().is_none());
+        let l1 = Observable::PhaseRange(Frequency::DORIS1);
+        let l2 = Observable::PhaseRange(Frequency::DORIS2);
+        let c1 = Observable::PseudoRange(Frequency::DORIS1);
+        let c2 = Observable::PseudoRange(Frequency::DORIS2);
 
-        assert_eq!(
-            Observable::from_str("L2").unwrap(),
-            Observable::PhaseRange(String::from("L2"))
-        );
+        assert!(l1.same_physics(&l1));
+        assert!(l1.same_physics(&l2));
 
-        assert_eq!(
-            Observable::from_str("L5").unwrap(),
-            Observable::PhaseRange(String::from("L5"))
-        );
-        assert_eq!(
-            Observable::from_str("L6Q").unwrap(),
-            Observable::PhaseRange(String::from("L6Q"))
-        );
-        assert_eq!(
-            Observable::from_str("L6Q").unwrap().code(),
-            Some(String::from("6Q")),
-        );
+        assert!(c1.same_physics(&c1));
+        assert!(c1.same_physics(&c2));
 
-        assert_eq!(
-            Observable::from_str("L1C").unwrap(),
-            Observable::PhaseRange(String::from("L1C"))
-        );
-        assert_eq!(
-            Observable::from_str("L1P").unwrap(),
-            Observable::PhaseRange(String::from("L1P"))
-        );
-        assert_eq!(
-            Observable::from_str("L8X").unwrap(),
-            Observable::PhaseRange(String::from("L8X"))
-        );
-
-        assert_eq!(
-            Observable::from_str("L1P").unwrap(),
-            Observable::PhaseRange(String::from("L1P"))
-        );
-
-        assert_eq!(
-            Observable::from_str("L8X").unwrap(),
-            Observable::PhaseRange(String::from("L8X"))
-        );
-
-        assert_eq!(
-            Observable::from_str("S7Q").unwrap(),
-            Observable::SSI(String::from("S7Q")),
-        );
-
-        assert_eq!(
-            Observable::PseudoRange("S7Q".to_string()).to_string(),
-            "S7Q",
-        );
-
-        assert_eq!(Observable::Doppler("D7Q".to_string()).to_string(), "D7Q",);
-
-        assert_eq!(Observable::Doppler("C7X".to_string()).to_string(), "C7X",);
-    }
-
-    #[test]
-    fn test_same_physics() {
-        assert!(Observable::Temperature.same_physics(&Observable::Temperature));
-        assert!(!Observable::Pressure.same_physics(&Observable::Temperature));
-
-        let dop_l1 = Observable::Doppler("L1".to_string());
-        let dop_l1c = Observable::Doppler("L1C".to_string());
-        let dop_l2 = Observable::Doppler("L2".to_string());
-        let dop_l2w = Observable::Doppler("L2W".to_string());
-
-        let pr_l1 = Observable::PseudoRange("L1".to_string());
-        let pr_l1c = Observable::PseudoRange("L1C".to_string());
-        let pr_l2 = Observable::PseudoRange("L2".to_string());
-        let pr_l2w = Observable::PseudoRange("L2W".to_string());
-
-        assert!(dop_l1.same_physics(&dop_l1));
-        assert!(dop_l1c.same_physics(&dop_l1));
-        assert!(dop_l1c.same_physics(&dop_l2));
-        assert!(dop_l1c.same_physics(&dop_l2w));
-        assert!(!dop_l1.same_physics(&pr_l1));
-        assert!(!dop_l1.same_physics(&pr_l1c));
-        assert!(!dop_l1.same_physics(&pr_l2));
-        assert!(!dop_l1.same_physics(&pr_l2w));
-
-        assert!(pr_l1.same_physics(&pr_l1));
-        assert!(pr_l1.same_physics(&pr_l1c));
-        assert!(pr_l1.same_physics(&pr_l2));
-        assert!(pr_l1.same_physics(&pr_l2w));
+        assert!(!l1.same_physics(&c1));
+        assert!(!l1.same_physics(&c2));
     }
 }

@@ -91,10 +91,10 @@ mod test {
     #[test]
     fn receiver_parsing() {
         let content = "2090088             LEICA GR50          4.51                ";
-        let rcvr = Receiver::from_str(content).unwrap();
 
+        let rcvr = Receiver::from_str(content).unwrap();
         assert_eq!(rcvr.model, "LEICA GR50");
-        assert_eq!(rcvr.sn, "2090088");
         assert_eq!(rcvr.firmware, "4.51");
+        assert_eq!(rcvr.serial_number, "2090088");
     }
 }

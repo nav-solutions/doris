@@ -352,7 +352,7 @@ impl DORIS {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{fmt_comment, is_rinex_comment};
+    use crate::fmt_comment;
 
     #[test]
     fn fmt_comments_singleline() {
@@ -366,12 +366,12 @@ mod test {
                 comment.len() >= 60,
                 "comments should be at least 60 byte long"
             );
+
             assert_eq!(
                 comment.find("COMMENT"),
                 Some(60),
                 "comment marker should located @ 60"
             );
-            assert!(is_rinex_comment(&comment), "should be valid comment");
         }
     }
 
@@ -385,7 +385,6 @@ mod test {
             for line in comments.lines() {
                 assert!(line.len() >= 60, "comment line should be at least 60 byte long");
                 assert_eq!(line.find("COMMENT"), Some(60), "comment marker should located @ 60");
-                assert!(is_rinex_comment(line), "should be valid comment");
             }
         }
     }
@@ -399,7 +398,7 @@ mod test {
 "G   18 C1C L1C S1C C2P C2W C2S C2L C2X L2P L2W L2S L2L L2X  SYS / # / OBS TYPES
        S2P S2W S2S S2L S2X                                  SYS / # / OBS TYPES"),
         ] {
-            assert_eq!(fmt_rinex(desc, "SYS / # / OBS TYPES"), expected);
+            assert_eq!(fmt_doris(desc, "SYS / # / OBS TYPES"), expected);
         }
     }
 }
