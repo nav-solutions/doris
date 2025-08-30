@@ -43,8 +43,8 @@ impl ClockOffset {
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Measurements {
-    /// [GroundStation] [ClockOffset]
-    pub clock_offset: ClockOffset,
+    /// Satellite (=measurement system) [ClockOffset].
+    pub satellite_clock_offset: ClockOffset,
 
     /// Observations indexed [Observable]s, measurement unit varies.
     pub observations: HashMap<Observable, f64>,

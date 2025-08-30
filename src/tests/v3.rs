@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use std::str::FromStr;
+
+use crate::{prelude::*, tests::toolkit::*};
 
 #[test]
 fn v3_cs2rx18164() {
@@ -97,6 +98,18 @@ fn v3_cs2rx18164() {
     // assert_eq!(doris.standardized_filename(), "cs2rx18164");
 
     // Example: retrieve site observation
+
+    // testbench
+    testbench(
+        &doris,
+        vec![TestPoint {
+            epoch: Epoch::from_str("2018-06-13T00:00:33.1799478 TAI").unwrap(),
+            station_id: 1,
+            measurements: vec![Measurement::ClockOffset(ClockOffset::from_measured_offset(
+                Duration::from_microseconds(-4.326631),
+            ))],
+        }],
+    );
 
     // Easy to format new data
     doris.to_gzip_file("formatted.gz").unwrap();

@@ -14,7 +14,7 @@ use crate::prelude::{Comments, Observable};
 use serde::{Deserialize, Serialize};
 
 pub use key::Key;
-pub use measurement::Measurements;
+pub use measurement::{ClockOffset, Measurements};
 
 /// [Record] contains all [DORIS] data.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -23,7 +23,8 @@ pub struct Record {
     /// Comments found "as is" during record parsing
     pub comments: Comments,
 
-    /// [GroundStation]s [Measurement]s
+    /// [GroundStation]s [Measurement]s, in chronolical order.
+    /// Observations vary with the satellite orbit course.
     pub measurements: BTreeMap<Key, Measurements>,
 }
 
