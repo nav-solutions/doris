@@ -1,7 +1,10 @@
+mod flag;
 mod formatting;
 mod key;
 mod measurement;
+mod observation;
 mod parsing;
+mod snr;
 
 use std::collections::BTreeMap;
 
@@ -13,8 +16,11 @@ use crate::prelude::{Comments, Observable};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+pub use flag::Flag;
 pub use key::Key;
 pub use measurement::{ClockOffset, Measurements};
+pub use observation::Observation;
+pub use snr::SNR;
 
 /// [Record] contains all [DORIS] data.
 #[derive(Clone, Debug, Default, PartialEq)]

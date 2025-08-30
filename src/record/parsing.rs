@@ -131,6 +131,8 @@ impl Record {
                                 epoch,
                                 station: station.clone(),
                             };
+
+                            // TODO: parse observations
                         }
                     }
 

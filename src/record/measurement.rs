@@ -1,7 +1,7 @@
 #[cfg(doc)]
 use crate::prelude::{GroundStation, TimeScale, DORIS};
 
-use crate::prelude::{Duration, Observable};
+use crate::prelude::{Duration, Observable, Observation};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -47,19 +47,19 @@ pub struct Measurements {
     pub satellite_clock_offset: ClockOffset,
 
     /// Observations indexed [Observable]s, measurement unit varies.
-    pub observations: HashMap<Observable, f64>,
+    pub observations: HashMap<Observable, Observation>,
 }
 
 impl Measurements {
     /// Add a new observation to this set of [Measurements]  
-    pub fn add_observation(&mut self, observable: Observable, value: f64) {
-        self.observations.insert(observable, value);
+    pub fn add_observation(&mut self, observable: Observable, observation: Observation) {
+        self.observations.insert(observable, observation);
     }
 
     /// Updates this set of [Measurements] with a new observation
-    pub fn with_observatoin(&self, observable: Observable, value: f64) -> Self {
+    pub fn with_observation(&self, observable: Observable, observation: Observation) -> Self {
         let mut s = self.clone();
-        s.observations.insert(observable, value);
+        s.observations.insert(observable, observation);
         s
     }
 

@@ -74,7 +74,7 @@ pub mod prelude {
         matcher::Matcher,
         observable::Observable,
         production::ProductionAttributes,
-        record::{ClockOffset, Key, Measurements, Record},
+        record::{ClockOffset, Flag, Key, Measurements, Observation, Record, SNR},
         station::GroundStation,
         Comments, DORIS,
     };
