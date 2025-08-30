@@ -30,10 +30,10 @@ To contribute or join our community, you may:
 ## Advantages :rocket: 
 
 - Fast
-- Limited to DORIS exclusively, 
-other RINEX-like formats have their own parser:
+- NB: this parser is limited to the DORIS format exclusively, 
+other RINEX like formats have their own parser:
   - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
-  - [IONEX maps](https://github.com/nav-solutions/ionex)
+  - [IONEX (Ionosphere) Maps](https://github.com/nav-solutions/ionex)
 
 ## Citation and referencing
 
