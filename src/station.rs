@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[cfg(doc)]
 use crate::prelude::DORIS;
 
@@ -32,7 +34,72 @@ pub struct GroundStation {
     pub(crate) code: u16,
 }
 
+impl Default for GroundStation {
+    /// Builds a default [GroundStation] which not suitable as is
+    /// and must be customized.
+    fn default() -> Self {
+        Self {
+            label: Default::default(),
+            site: Default::default(),
+            domes: DOMES::from_str("10003S005").unwrap(),
+            beacon_revision: 3,
+            k_frequency_shift: 0,
+            code: 0,
+        }
+    }
+}
+
 impl GroundStation {
+    /// Defines a [GroundStation] with desired site name
+    pub fn with_site_name(&self, name: &str) -> Self {
+        let mut s = self.clone();
+        s.site = name.to_string();
+        s
+    }
+
+    /// Defines a [GroundStation] with desired site label,
+    /// which should be a 4 letter description of the site name.
+    pub fn with_site_label(&self, label: &str) -> Self {
+        let mut s = self.clone();
+        s.label = label.to_string();
+        s
+    }
+
+    /// Defines a [GroundStation] with desired [DOMES] site number
+    pub fn with_domes_str(&self, domes: &str) -> Result<Self, ParsingError> {
+        let domes = DOMES::from_str(domes)?;
+        Ok(self.with_domes(domes))
+    }
+
+    /// Defines a [GroundStation] with desired [DOMES] site number
+    pub fn with_domes(&self, domes: DOMES) -> Self {
+        let mut s = self.clone();
+        s.domes = domes;
+        s
+    }
+
+    /// Returns [GroundStation] with updated DORIS beacon revision
+    pub fn with_beacon_revision(&self, revision: u8) -> Self {
+        let mut s = self.clone();
+        s.beacon_revision = revision;
+        s
+    }
+
+    /// Defines a [GroundStation] with updated f1/f2 frequency shift
+    pub fn with_frequency_shift(&self, shift: i8) -> Self {
+        let mut s = self.clone();
+        s.k_frequency_shift = shift;
+        s
+    }
+
+    /// Defines a [GroundStation] with desired station ID#
+    /// which is used to define this site uniquely in a DORIS file.
+    pub fn with_unique_id(&self, code: u16) -> Self {
+        let mut s = self.clone();
+        s.code = code;
+        s
+    }
+
     /// Returns true if this [GroundStation] is matched by given [Matcher] specs
     pub fn matches<'a>(&self, matcher: &'a Matcher) -> bool {
         match matcher {
@@ -113,6 +180,12 @@ mod test {
     use super::GroundStation;
     use crate::prelude::{DOMESTrackingPoint, DOMES};
     use std::str::FromStr;
+
+    #[test]
+    fn default_station() {
+        let _ = GroundStation::default();
+    }
+
     #[test]
     fn station_parsing() {
         for (desc, expected) in [

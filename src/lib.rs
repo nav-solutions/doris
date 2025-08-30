@@ -56,9 +56,11 @@ use hifitime::prelude::{Duration, Epoch};
 use crate::{
     error::{Error, FormattingError, ParsingError},
     header::Header,
+    matcher::Matcher,
     observable::Observable,
     production::ProductionAttributes,
     record::Record,
+    station::GroundStation,
 };
 
 /// [Comments] found in [DORIS] files
@@ -283,6 +285,16 @@ impl DORIS {
             }
         }
         false
+    }
+
+    /// Returns [GroundStation] information for matching site
+    pub fn ground_station<'a>(&self, matcher: Matcher<'a>) -> Option<GroundStation> {
+        self.header
+            .ground_stations
+            .iter()
+            .filter(|station| station.matches(&matcher))
+            .reduce(|k, _| k)
+            .cloned()
     }
 
     /// Studies actual measurement rate and returns the highest
