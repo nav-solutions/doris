@@ -36,7 +36,7 @@ pub enum Observable {
 
 impl Default for Observable {
     fn default() -> Self {
-        Self::PhaseRange(Default::default())
+        Self::PseudoRange(Default::default())
     }
 }
 
@@ -88,8 +88,8 @@ impl std::fmt::Display for Observable {
             Self::Temperature => write!(f, "Temperature"),
             Self::HumidityRate => write!(f, "Moisture rate"),
             Self::FrequencyRatio => write!(f, "Frequency ratio"),
-            Self::PseudoRange(freq) => write!(f, "L{}", freq),
-            Self::PhaseRange(freq) => write!(f, "C{}", freq),
+            Self::PseudoRange(freq) => write!(f, "C{}", freq),
+            Self::PhaseRange(freq) => write!(f, "L{}", freq),
             Self::Power(freq) => write!(f, "W{}", freq),
         }
     }
@@ -130,10 +130,8 @@ mod test {
     #[test]
     fn test_default_observable() {
         let default = Observable::default();
-        assert_eq!(
-            Observable::default(),
-            Observable::PhaseRange(Frequency::DORIS1)
-        );
+
+        assert_eq!(default, Observable::PseudoRange(Frequency::DORIS1));
 
         let formatted = default.to_string();
 
@@ -146,26 +144,23 @@ mod test {
 
     #[test]
     fn observable_parsing() {
-        for (observable, expected) in [
-            ("L1", Observable::PhaseRange(Frequency::DORIS1)),
-            ("L2", Observable::PhaseRange(Frequency::DORIS2)),
-            ("C1", Observable::PseudoRange(Frequency::DORIS1)),
-            ("C2", Observable::PseudoRange(Frequency::DORIS2)),
-            ("W1", Observable::Power(Frequency::DORIS1)),
-            ("W2", Observable::Power(Frequency::DORIS2)),
-            ("T", Observable::Temperature),
-            ("P", Observable::Pressure),
-            ("H", Observable::HumidityRate),
+        for (observable, expected, formatted) in [
+            ("L1", Observable::PhaseRange(Frequency::DORIS1), "L1"),
+            ("L2", Observable::PhaseRange(Frequency::DORIS2), "L2"),
+            ("C1", Observable::PseudoRange(Frequency::DORIS1), "C1"),
+            ("C2", Observable::PseudoRange(Frequency::DORIS2), "C2"),
+            ("W1", Observable::Power(Frequency::DORIS1), "W1"),
+            ("W2", Observable::Power(Frequency::DORIS2), "W2"),
+            ("T", Observable::Temperature, "Temperature"),
+            ("P", Observable::Pressure, "Pressure"),
+            ("H", Observable::HumidityRate, "Moisture rate"),
         ] {
             let parsed = Observable::from_str(observable).unwrap_or_else(|e| {
                 panic!("failed to parse observable from \"{}\": {}", observable, e);
             });
 
             assert_eq!(parsed, expected);
-
-            let formatted = parsed.to_string();
-
-            assert_eq!(formatted, observable);
+            assert_eq!(parsed.to_string(), formatted);
         }
 
         let l1 = Observable::PhaseRange(Frequency::DORIS1);

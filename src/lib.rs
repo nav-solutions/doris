@@ -61,7 +61,7 @@ use crate::{
     record::Record,
 };
 
-/// [Comments] found in DORIS files
+/// [Comments] found in [DORIS] files
 pub type Comments = Vec<String>;
 
 pub mod prelude {
@@ -75,7 +75,7 @@ pub mod prelude {
         production::ProductionAttributes,
         record::{Key, Record},
         station::GroundStation,
-        Comments,
+        Comments, DORIS,
     };
 
     pub use gnss::prelude::{Constellation, DOMESTrackingPoint, COSPAR, DOMES, SV};
@@ -109,14 +109,14 @@ pub(crate) fn fmt_comment(content: &str) -> String {
 #[derive(Clone, Debug, PartialEq)]
 /// [DORIS] is composed of a [Header] and a [Record] section.
 /// ```
-/// use doris::prelude::*;
+/// use doris_rs::prelude::*;
 ///
-/// let doris = DORIS::from_file("data/OBS/V2/delf0010.21o")
+/// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
 ///     .unwrap();
 ///
-/// // header contains high level information
-/// assert_eq!(doris.header.version.major, 2);
-/// assert_eq!(doris.header.version.minor, 11);
+/// // File and DORIS revision
+/// assert_eq!(doris.header.version.major, 3);
+///
 /// ```
 pub struct DORIS {
     /// [Header] gives general information
