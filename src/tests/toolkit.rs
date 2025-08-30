@@ -1,9 +1,9 @@
-use crate::prelude::{ClockOffset, Epoch, Key, Matcher, Observable, DORIS};
+use crate::prelude::{ClockOffset, Epoch, Key, Matcher, Observable, Observation, DORIS};
 
 #[derive(Debug)]
 pub enum Measurement {
     ClockOffset(ClockOffset),
-    Observation((Observable, f64)),
+    Observation((Observable, Observation)),
 }
 
 pub struct TestPoint {

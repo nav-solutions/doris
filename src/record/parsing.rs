@@ -20,11 +20,13 @@ impl Record {
         const CLOCK_OFFSET: usize = 38;
         const CLOCK_SIZE: usize = 14;
         const MIN_EPOCH_SIZE: usize = EPOCH_SIZE + CLOCK_SIZE + 2;
+        const OBSERVABLE_WIDTH: usize = 14;
 
         // eos reached: process pending buffer & exit
         let mut eos = false;
 
         // current line storage
+        let mut buf_len = 0;
         let mut line_buf = String::with_capacity(128);
 
         // epoch storage
@@ -34,7 +36,8 @@ impl Record {
         let mut record = Record::default();
 
         let mut obs_ptr = 0;
-        let mut buf_len = 0;
+        let mut line_offset = 0;
+        let nb_observables = header.observables.len();
 
         // Iterate and consume, one line at a time
         while let Ok(size) = reader.read_line(&mut line_buf) {
@@ -98,8 +101,6 @@ impl Record {
 
                     // continue parsing, identify and grab data
                     for line in epoch_buf.lines() {
-                        println!("CONTENT: \"{}\"", line);
-
                         // new station
                         if line.starts_with("D") {
                             // station identification
@@ -132,7 +133,39 @@ impl Record {
                                 station: station.clone(),
                             };
 
-                            // TODO: parse observations
+                            let mut offset = 0;
+                            let line = line.split_at(5).1;
+                            let size = line.len();
+
+                            loop {
+                                // data
+                                if offset + OBSERVABLE_WIDTH < size {
+                                    let slice = &line_buf
+                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 2];
+                                }
+
+                                offset += OBSERVABLE_WIDTH;
+
+                                // M1 flag
+                                if offset + 1 < size {
+                                    let slice = &line_buf
+                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 1];
+                                }
+
+                                offset += OBSERVABLE_WIDTH;
+
+                                // M2 flag
+                                if offset + 1 < size {
+                                    let slice = &line_buf
+                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 2];
+                                }
+
+                                offset += 1;
+
+                                if offset >= size {
+                                    break;
+                                }
+                            }
                         }
                     }
 
