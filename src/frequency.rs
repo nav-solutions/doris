@@ -1,4 +1,4 @@
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
+#[derive(Debug, Copy, Default, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
 pub enum Frequency {
     /// DORIS #1 frequency
     #[default]

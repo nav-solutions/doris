@@ -82,19 +82,19 @@ impl std::str::FromStr for Version {
 
         match s.contains('.') {
             true => {
-                let major = digits.next().ok_or(ParsingError::VersionFormat)?;
+                let major = digits.next().ok_or(ParsingError::Version)?;
 
-                let minor = digits.next().ok_or(ParsingError::VersionFormat)?;
+                let minor = digits.next().ok_or(ParsingError::Version)?;
 
-                let major = major.parse::<u8>().or(Err(ParsingError::VersionParsing))?;
-                let minor = minor.parse::<u8>().or(Err(ParsingError::VersionParsing))?;
+                let major = major.parse::<u8>().or(Err(ParsingError::Version))?;
+                let minor = minor.parse::<u8>().or(Err(ParsingError::Version))?;
 
                 Ok(Self { major, minor })
             },
             false => {
-                let major = digits.next().ok_or(ParsingError::VersionFormat)?;
+                let major = digits.next().ok_or(ParsingError::Version)?;
 
-                let major = major.parse::<u8>().or(Err(ParsingError::VersionParsing))?;
+                let major = major.parse::<u8>().or(Err(ParsingError::Version))?;
 
                 Ok(Self { major, minor: 0 })
             },

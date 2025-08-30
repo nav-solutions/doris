@@ -13,7 +13,6 @@ impl Header {
     pub fn format<W: Write>(&self, w: &mut BufWriter<W>) -> Result<(), FormattingError> {
         self.format_prog_runby(w)?;
         self.format_observer_agency(w)?;
-        self.format_sampling_interval(w)?;
 
         writeln!(w, "{}", fmt_doris("", "END OF HEADER"))?;
         Ok(())
@@ -41,7 +40,7 @@ impl Header {
         };
 
         // PGM / RUN BY / DATE
-        writeln!(w, "{}", fmt_rinex(&string, "PGM / RUN BY / DATE"),)?;
+        writeln!(w, "{}", fmt_doris(&string, "PGM / RUN BY / DATE"),)?;
 
         Ok(())
     }
@@ -63,23 +62,8 @@ impl Header {
             string.push_str("                    ");
         };
 
-        writeln!(w, "{}", fmt_rinex(&string, "OBSERVER / AGENCY"),)?;
+        writeln!(w, "{}", fmt_doris(&string, "OBSERVER / AGENCY"),)?;
 
-        Ok(())
-    }
-
-    /// Formats "INTERVAL"
-    fn format_sampling_interval<W: Write>(
-        &self,
-        w: &mut BufWriter<W>,
-    ) -> Result<(), FormattingError> {
-        if let Some(interval) = &self.sampling_interval {
-            writeln!(
-                w,
-                "{}",
-                fmt_rinex(&format!("{:6}", interval.to_seconds()), "INTERVAL")
-            )?;
-        }
         Ok(())
     }
 

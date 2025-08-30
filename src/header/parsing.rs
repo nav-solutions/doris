@@ -18,6 +18,7 @@ impl Header {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParsingError> {
         let mut version = Version::default();
 
+        let mut satellite = String::with_capacity(16);
         let mut program = Option::<String>::None;
         let mut run_by = Option::<String>::None;
         let mut date = Option::<String>::None;
@@ -27,10 +28,11 @@ impl Header {
         let mut doi = Option::<String>::None;
         let mut receiver = Option::<Receiver>::None;
         let mut antenna = Option::<Antenna>::None;
-        let mut station_url = Option::<String>::None;
         let mut cospar = Option::<COSPAR>::None;
         let mut l1_l2_date_offset = Duration::default();
         let mut ground_stations = Vec::with_capacity(8);
+        let mut time_of_first_obs = Option::<Epoch>::None;
+        let mut time_of_last_obs = Option::<Epoch>::None;
 
         let mut observables = Vec::<Observable>::with_capacity(8);
         let mut observables_continuation = false;
@@ -69,11 +71,11 @@ impl Header {
                 let type_str = type_str.trim();
                 let constell_str = constell_str.trim();
 
-                if !type_str.eq('O') {
+                if !type_str.eq("O") {
                     return Err(ParsingError::InvalidDoris);
                 }
 
-                if !constell_str.eq('D') {
+                if !constell_str.eq("D") {
                     return Err(ParsingError::InvalidDoris);
                 }
 
@@ -97,6 +99,9 @@ impl Header {
                 if date_str.len() > 0 {
                     date = Some(date_str.to_string());
                 }
+            } else if marker.contains("SATELLITE NAME") {
+                let name = content.split_at(20).0.trim();
+                satellite = name.to_string();
             } else if marker.contains("OBSERVER / AGENCY") {
                 let (obs, ag) = content.split_at(20);
                 let obs = obs.trim();
@@ -133,11 +138,6 @@ impl Header {
                 //         observation.with_scaling(constell, observable, scaling);
                 //     }
                 // }
-            } else if marker.contains("STATION INFORMATION") {
-                let url = content.split_at(40).0.trim();
-                if url.len() > 0 {
-                    station_url = Some(url.to_string());
-                }
             } else if marker.contains("LICENSE OF USE") {
                 let lic = content.split_at(40).0.trim();
                 if lic.len() > 0 {
@@ -154,11 +154,9 @@ impl Header {
                 );
             } else if marker.contains("# OF STATIONS") {
             } else if marker.contains("TIME OF FIRST OBS") {
-                let time_of_first_obs = Self::parse_time_of_obs(content)?;
-                time_of_first_obs = Some(time_of_first_obs);
+                time_of_first_obs = Some(Self::parse_time_of_obs(content)?);
             } else if marker.contains("TIME OF LAST OBS") {
-                let time_of_last_obs = Self::parse_time_of_obs(content)?;
-                time_of_last_obs = Some(time_of_last_obs);
+                time_of_last_obs = Some(Self::parse_time_of_obs(content)?);
             } else if marker.contains("SYS / # / OBS TYPES") {
                 // Self::parse_observables(content);
                 observables_continuation = true;
@@ -190,10 +188,11 @@ impl Header {
             observer,
             license,
             doi,
-            station_url,
             receiver,
             antenna,
             cospar,
+            satellite,
+            l1_l2_date_offset,
             ground_stations,
         })
     }
@@ -213,7 +212,7 @@ impl Header {
         let mut y = y
             .trim()
             .parse::<u32>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         // handle OLD RINEX problem
         if y >= 79 && y <= 99 {
@@ -225,32 +224,32 @@ impl Header {
         let m = m
             .trim()
             .parse::<u8>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         let d = d
             .trim()
             .parse::<u8>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         let hh = hh
             .trim()
             .parse::<u8>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         let mm = mm
             .trim()
             .parse::<u8>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         let ss = ss
             .trim()
             .parse::<u8>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         let ns = ns
             .trim()
             .parse::<u32>()
-            .map_err(|_| ParsingError::DatetimeParsing)?;
+            .map_err(|_| ParsingError::EpochFormat)?;
 
         /*
          * We set TAI as "default" Timescale.
@@ -272,7 +271,7 @@ impl Header {
             "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:08} {}",
             y, m, d, hh, mm, ss, ns, ts
         ))
-        .map_err(|_| ParsingError::DatetimeParsing)
+        .map_err(|_| ParsingError::EpochFormat)
     }
 }
 

@@ -33,10 +33,14 @@ impl Receiver {
             w,
             "{}",
             fmt_doris(
-                &format!("{:<20}{:<20}{}", self.sn, self.model, self.firmware),
+                &format!(
+                    "{:<20}{:<20}{}",
+                    self.serial_number, self.model, self.firmware
+                ),
                 "REC # / TYPE / VERS"
             )
         )?;
+
         Ok(())
     }
 
@@ -46,9 +50,9 @@ impl Receiver {
         s
     }
 
-    pub fn with_serial_number(&self, sn: &str) -> Self {
+    pub fn with_serial_number(&self, serial_number: &str) -> Self {
         let mut s = self.clone();
-        s.sn = sn.to_string();
+        s.serial_number = serial_number.to_string();
         s
     }
 

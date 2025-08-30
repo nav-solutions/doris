@@ -12,6 +12,9 @@ use std::io::Error as IoError;
 /// Errors that may rise when parsing DORIS files
 #[derive(Debug, Error)]
 pub enum ParsingError {
+    #[error("invalid doris file")]
+    InvalidDoris,
+
     #[error("header line too short (invalid)")]
     HeaderLineTooShort,
 
@@ -20,6 +23,9 @@ pub enum ParsingError {
 
     #[error("observable parsing error")]
     Observable,
+
+    #[error("COSPAR number parsing: {0}")]
+    COSPAR(#[from] CosparParsingError),
 
     #[error("DOMES site number parsing: {0}")]
     DOMES(#[from] DOMESParsingError),

@@ -7,7 +7,7 @@ use crate::{error::ParsingError, frequency::Frequency};
 /// For example, [Observable::PhaseRange] and [Observable::Power] are two different physics.
 /// DORIS files also provides information sampled at the ground station level for high
 /// precision models (like pressure and moisture rate).
-#[derive(Debug, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Observable {
     /// Carrier phase observation (in meters, not cycles)

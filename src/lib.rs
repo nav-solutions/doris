@@ -53,8 +53,9 @@ use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 use hifitime::prelude::{Duration, Epoch};
 
 use crate::{
-    error::{Error, ParsingError},
+    error::{Error, FormattingError, ParsingError},
     header::Header,
+    observable::Observable,
     production::ProductionAttributes,
     record::Record,
 };
@@ -67,7 +68,7 @@ pub mod prelude {
     pub use crate::{
         error::{FormattingError, ParsingError},
         frequency::Frequency,
-        header::{antenna::Antenna, receiver::Receiver, Header},
+        header::{Antenna, Header, Receiver, Version},
         matcher::Matcher,
         observable::Observable,
         production::ProductionAttributes,
@@ -318,42 +319,42 @@ impl DORIS {
 
         let half_lhs_dt = lhs_dt / 2.0;
 
-        if let Some(rhs) = rhs.record.as_obs() {
-            if let Some(rec) = self.record.as_mut_obs() {
-                rec.retain(|k, v| {
-                    v.signals.retain_mut(|sig| {
-                        let mut reference = 0.0;
-                        let mut min_dt = Duration::MAX;
+        // if let Some(rhs) = rhs.record.as_obs() {
+        //     if let Some(rec) = self.record.as_mut_obs() {
+        //         rec.retain(|k, v| {
+        //             v.signals.retain_mut(|sig| {
+        //                 let mut reference = 0.0;
+        //                 let mut min_dt = Duration::MAX;
 
-                        // temporal filter
-                        let filtered_rhs_epochs = rhs.iter().filter(|(rhs, _)| {
-                            let dt = (rhs.epoch - k.epoch).abs();
-                            dt <= half_lhs_dt
-                        });
+        //                 // temporal filter
+        //                 let filtered_rhs_epochs = rhs.iter().filter(|(rhs, _)| {
+        //                     let dt = (rhs.epoch - k.epoch).abs();
+        //                     dt <= half_lhs_dt
+        //                 });
 
-                        for (rhs_epoch, rhs_values) in filtered_rhs_epochs {
-                            for rhs_sig in rhs_values.signals.iter() {
-                                if rhs_sig.sv == sig.sv && rhs_sig.observable == sig.observable {
-                                    let dt = (rhs_epoch.epoch - k.epoch).abs();
-                                    if dt <= min_dt {
-                                        reference = rhs_sig.value;
-                                        min_dt = dt;
-                                    }
-                                }
-                            }
-                        }
+        //                 for (rhs_epoch, rhs_values) in filtered_rhs_epochs {
+        //                     for rhs_sig in rhs_values.signals.iter() {
+        //                         if rhs_sig.sv == sig.sv && rhs_sig.observable == sig.observable {
+        //                             let dt = (rhs_epoch.epoch - k.epoch).abs();
+        //                             if dt <= min_dt {
+        //                                 reference = rhs_sig.value;
+        //                                 min_dt = dt;
+        //                             }
+        //                         }
+        //                     }
+        //                 }
 
-                        if min_dt < Duration::MAX {
-                            sig.value -= reference;
-                        }
+        //                 if min_dt < Duration::MAX {
+        //                     sig.value -= reference;
+        //                 }
 
-                        min_dt < Duration::MAX
-                    });
+        //                 min_dt < Duration::MAX
+        //             });
 
-                    !v.signals.is_empty()
-                });
-            }
-        }
+        //             !v.signals.is_empty()
+        //         });
+        //     }
+        // }
 
         Ok(())
     }

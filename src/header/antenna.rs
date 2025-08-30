@@ -1,4 +1,3 @@
-//! Receiver and antenna
 use crate::{
     fmt_doris,
     prelude::{FormattingError, COSPAR, SV},
@@ -44,9 +43,13 @@ impl Antenna {
         writeln!(
             w,
             "{}",
-            fmt_doris(&format!("{:<20}{}", self.sn, self.model), "ANT # / TYPE")
+            fmt_doris(
+                &format!("{:<20}{}", self.serial_number, self.model),
+                "ANT # / TYPE"
+            )
         )?;
-        if let Some(coords) = &self.coords {
+
+        if let Some(coords) = &self.approx_coordinates {
             writeln!(
                 w,
                 "{}",
@@ -56,6 +59,7 @@ impl Antenna {
                 )
             )?;
         }
+
         writeln!(
             w,
             "{}",
@@ -69,6 +73,7 @@ impl Antenna {
                 "ANTENNA: DELTA H/E/N"
             )
         )?;
+
         Ok(())
     }
 

@@ -19,14 +19,14 @@ pub enum Matcher<'a> {
     /// use doris_rs::prelude:*;
     ///
     /// ```
-    Site(String),
+    Site(&'a str),
 
     /// Scarch by 4 letter station label
     /// ```
     /// use doris_rs::prelude:*;
     ///
     /// ```
-    Label(String),
+    Label(&'a str),
 
     /// Search by DOMES code
     /// ```
