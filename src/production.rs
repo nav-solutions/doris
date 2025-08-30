@@ -42,8 +42,11 @@ impl std::str::FromStr for ProductionAttributes {
         let name_len = filename.len();
 
         if name_len != 12 && name_len != 15 {
-            return Err(ParsingError::NonStandardFilename);
+            return Err(ParsingError::NonStandardFileName);
         }
+
+        let doy = 0;
+        let satellite = "Undefined".to_string();
 
         let offset = filename.find('.').unwrap_or(0);
 
@@ -51,7 +54,7 @@ impl std::str::FromStr for ProductionAttributes {
 
         let year = filename[offset + 1..offset + 3]
             .parse::<u32>()
-            .map_err(|_| ParsingError::NonStandardFilename)?;
+            .map_err(|_| ParsingError::NonStandardFileName)?;
 
         Ok(Self {
             satellite,

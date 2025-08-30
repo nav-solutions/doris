@@ -18,7 +18,7 @@ impl Record {
     pub fn parse<R: Read>(
         header: &mut Header,
         reader: &mut BufReader<R>,
-    ) -> Result<(Self, Comments), ParsingError> {
+    ) -> Result<Self, ParsingError> {
         // eos reached: process pending buffer & exit
         let mut eos = false;
 
@@ -33,8 +33,6 @@ impl Record {
 
         let mut comments = Comments::default();
         let mut record = Record::default();
-
-        let mut gnss_observables = Default::default();
 
         // Iterate and consume, one line at a time
         while let Ok(size) = reader.read_line(&mut line_buf) {

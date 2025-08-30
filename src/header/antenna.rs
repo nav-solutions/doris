@@ -85,16 +85,16 @@ impl Antenna {
     }
 
     /// Sets desired Serial Number
-    pub fn with_serial_number(&self, sn: &str) -> Self {
+    pub fn with_serial_number(&self, serial_number: &str) -> Self {
         let mut s = self.clone();
-        s.sn = sn.to_string();
+        s.serial_number = serial_number.to_string();
         s
     }
 
     /// Sets reference/base coordinates (3D)
     pub fn with_base_coordinates(&self, coords: (f64, f64, f64)) -> Self {
         let mut s = self.clone();
-        s.coords = Some(coords);
+        s.approx_coordinates = Some(coords);
         s
     }
 

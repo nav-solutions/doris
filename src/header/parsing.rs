@@ -31,8 +31,9 @@ impl Header {
         let mut cospar = Option::<COSPAR>::None;
         let mut l1_l2_date_offset = Duration::default();
         let mut ground_stations = Vec::with_capacity(8);
-        let mut time_of_first_obs = Option::<Epoch>::None;
-        let mut time_of_last_obs = Option::<Epoch>::None;
+        let mut scaling_factors = HashMap::new();
+        let mut time_of_first_observation = Option::<Epoch>::None;
+        let mut time_of_last_observation = Option::<Epoch>::None;
 
         let mut observables = Vec::<Observable>::with_capacity(8);
         let mut observables_continuation = false;
@@ -154,9 +155,9 @@ impl Header {
                 );
             } else if marker.contains("# OF STATIONS") {
             } else if marker.contains("TIME OF FIRST OBS") {
-                time_of_first_obs = Some(Self::parse_time_of_obs(content)?);
+                time_of_first_observation = Some(Self::parse_time_of_obs(content)?);
             } else if marker.contains("TIME OF LAST OBS") {
-                time_of_last_obs = Some(Self::parse_time_of_obs(content)?);
+                time_of_last_observation = Some(Self::parse_time_of_obs(content)?);
             } else if marker.contains("SYS / # / OBS TYPES") {
                 // Self::parse_observables(content);
                 observables_continuation = true;
@@ -192,8 +193,11 @@ impl Header {
             antenna,
             cospar,
             satellite,
+            scaling_factors,
             l1_l2_date_offset,
             ground_stations,
+            time_of_first_observation,
+            time_of_last_observation,
         })
     }
 

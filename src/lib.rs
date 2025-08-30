@@ -23,6 +23,7 @@ extern crate serde;
 extern crate gnss_rs as gnss;
 extern crate num;
 
+pub mod constants;
 pub mod error;
 pub mod frequency;
 pub mod header;
@@ -213,7 +214,8 @@ impl DORIS {
 
         let mut reader = BufReader::new(fd);
         let mut doris = Self::parse(&mut reader)?;
-        doris.production = file_attributes;
+
+        doris.production = Some(file_attributes);
 
         Ok(doris)
     }
@@ -252,7 +254,9 @@ impl DORIS {
         let reader = GzDecoder::new(fd);
         let mut reader = BufReader::new(reader);
         let mut doris = Self::parse(&mut reader)?;
-        doris.production = file_attributes;
+
+        doris.production = Some(file_attributes);
+
         Ok(doris)
     }
 
@@ -279,21 +283,6 @@ impl DORIS {
             }
         }
         false
-    }
-
-    /// Returns [Epoch] Iterator. This applies to all but ANTEX special format,
-    /// for which we return null.
-    pub fn epoch_iter(&self) -> Box<dyn Iterator<Item = Epoch> + '_> {
-        Box::new(self.record.iter().map(|(k, _)| k.epoch).unique())
-    }
-
-    /// Returns [Observable]s Iterator.
-    pub fn observables_iter(&self) -> Box<dyn Iterator<Item = &Observable> + '_> {
-        Box::new([].into_iter())
-        // self.observations_iter()
-        //     .map(|(_, v)| &v.observable)
-        //     .unique()
-        //     .sorted(),
     }
 
     /// Studies actual measurement rate and returns the highest

@@ -1,5 +1,5 @@
-//! Receiver and antenna
 use crate::{
+    error::ParsingError,
     fmt_doris,
     prelude::{FormattingError, COSPAR, SV},
 };
@@ -64,14 +64,20 @@ impl Receiver {
 }
 
 impl FromStr for Receiver {
-    type Err = std::io::Error;
+    type Err = ParsingError;
+
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let (id, rem) = line.split_at(20);
-        let (make, rem) = rem.split_at(20);
+        if line.len() < 60 {
+            return Err(ParsingError::Receiver);
+        }
+
+        let (sn, rem) = line.split_at(20);
+        let (model, rem) = rem.split_at(20);
         let (version, _) = rem.split_at(20);
+
         Ok(Receiver {
-            sn: id.trim().to_string(),
-            model: make.trim().to_string(),
+            serial_number: sn.trim().to_string(),
+            model: model.trim().to_string(),
             firmware: version.trim().to_string(),
         })
     }

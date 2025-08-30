@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -105,7 +107,7 @@ impl std::str::FromStr for Observable {
             "H" | "MOISTURE RATE" => Ok(Self::HumidityRate),
             "F" | "FREQUENCY RATIO" => Ok(Self::FrequencyRatio),
             _ => {
-                let frequency = Frequency::from_str(content[1..])?;
+                let frequency = Frequency::from_str(&content[1..])?;
                 if content.starts_with('L') {
                     Ok(Self::PhaseRange(frequency))
                 } else if content.starts_with('C') {

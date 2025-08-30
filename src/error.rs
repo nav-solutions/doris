@@ -24,6 +24,12 @@ pub enum ParsingError {
     #[error("observable parsing error")]
     Observable,
 
+    #[error("invalid receiver format")]
+    Receiver,
+
+    #[error("invalid frequency")]
+    Frequency,
+
     #[error("COSPAR number parsing: {0}")]
     COSPAR(#[from] CosparParsingError),
 
@@ -33,8 +39,8 @@ pub enum ParsingError {
     #[error("L1/L2 date offset parsing error")]
     DorisL1L2DateOffset,
 
-    #[error("station parsing error")]
-    DorisStation,
+    #[error("ground station parsing error")]
+    GroundStation,
 
     #[error("epoch error: {0}")]
     Epoch(#[from] HifitimeError),
@@ -44,6 +50,9 @@ pub enum ParsingError {
 
     #[error("epoch parsing error: {0}")]
     EpochParsing(#[from] HifitimeParsingError),
+
+    #[error("not a standardized file name")]
+    NonStandardFileName,
 }
 
 /// Errors that may rise when formatting DORIS files

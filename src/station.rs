@@ -4,7 +4,10 @@ use crate::prelude::DORIS;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::{Matcher, ParsingError, DOMES};
+use crate::{
+    constants::USO_FREQ_HZ,
+    prelude::{Matcher, ParsingError, DOMES},
+};
 
 /// [GroundStation] definition, observed from DORIS satellites.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -26,28 +29,32 @@ pub struct GroundStation {
     pub k_frequency_shift: i8,
 
     /// ID# used in file indexing
-    pub(crate) key: u16,
+    pub(crate) code: u16,
 }
 
 impl GroundStation {
     /// Returns true if this [GroundStation] is matched by given [Matcher] specs
     pub fn matches<'a>(&self, matcher: &'a Matcher) -> bool {
         match matcher {
-            Matcher::ID(code) => self.key == code,
-            Matcher::Site(site) => self.site == site,
-            Matcher::DOMES(domes) => self.domes == domes,
-            Matcher::Code(label) => self.label == label,
+            Matcher::ID(code) => self.code == *code,
+            Matcher::Site(site) => self.site == *site,
+            Matcher::DOMES(domes) => self.domes == *domes,
+            Matcher::Label(label) => self.label == *label,
         }
     }
 
     /// Returns S1 frequency shift for this [GroundStation] in Hertz
     pub fn s1_frequency_shift(&self) -> f64 {
-        543.0 * Self::USO_FREQ * (3.0 / 4.0 + 87.0 * self.k_factor as f64 / 5.0 * 2.0_f64.powi(26))
+        543.0
+            * USO_FREQ_HZ
+            * (3.0 / 4.0 + 87.0 * self.k_frequency_shift as f64 / 5.0 * 2.0_f64.powi(26))
     }
 
     /// Returns U2 frequency shift for this [GroundStation] in Hertz
     pub fn u2_frequency_shift(&self) -> f64 {
-        107.0 * Self::USO_FREQ * (3.0 / 4.0 + 87.0 * self.k_factor as f64 / 5.0 * 2.0_f64.powi(26))
+        107.0
+            * USO_FREQ_HZ
+            * (3.0 / 4.0 + 87.0 * self.k_frequency_shift as f64 / 5.0 * 2.0_f64.powi(26))
     }
 }
 
@@ -55,7 +62,7 @@ impl std::str::FromStr for GroundStation {
     type Err = ParsingError;
     fn from_str(content: &str) -> Result<Self, Self::Err> {
         if content.len() < 40 {
-            return Err(ParsingError::DorisGroundStationFormat);
+            return Err(ParsingError::GroundStation);
         }
 
         let content = content.split_at(1).1;
@@ -70,18 +77,18 @@ impl std::str::FromStr for GroundStation {
             site: name.trim().to_string(),
             label: label.trim().to_string(),
             domes: DOMES::from_str(domes.trim())?,
-            gen: gen
+            beacon_revision: gen
                 .trim()
                 .parse::<u8>()
-                .map_err(|_| ParsingError::DorisGroundStation)?,
-            k_factor: k_factor
+                .map_err(|_| ParsingError::GroundStation)?,
+            k_frequency_shift: k_factor
                 .trim()
                 .parse::<i8>()
-                .map_err(|_| ParsingError::DorisGroundStation)?,
-            key: key
+                .map_err(|_| ParsingError::GroundStation)?,
+            code: key
                 .trim()
                 .parse::<u16>()
-                .map_err(|_| ParsingError::DorisGroundStation)?,
+                .map_err(|_| ParsingError::GroundStation)?,
         })
     }
 }
@@ -91,7 +98,12 @@ impl std::fmt::Display for GroundStation {
         write!(
             f,
             "D{:02}  {} {:<29} {}  {}   {}",
-            self.key, self.label, self.site, self.domes, self.gen, self.k_factor
+            self.code,
+            self.label,
+            self.site,
+            self.domes,
+            self.beacon_revision,
+            self.k_frequency_shift
         )
     }
 }
@@ -115,9 +127,9 @@ mod test {
                         sequential: 2,
                         point: DOMESTrackingPoint::Instrument,
                     },
-                    gen: 3,
-                    k_factor: 0,
-                    key: 1,
+                    beacon_revision: 3,
+                    k_frequency_shift: 0,
+                    code: 1,
                 },
             ),
             (
@@ -131,9 +143,9 @@ mod test {
                         sequential: 178,
                         point: DOMESTrackingPoint::Instrument,
                     },
-                    gen: 3,
-                    k_factor: 0,
-                    key: 17,
+                    beacon_revision: 3,
+                    k_frequency_shift: 0,
+                    code: 17,
                 },
             ),
         ] {

@@ -35,9 +35,7 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
     for (field_index, item) in content.split_ascii_whitespace().enumerate() {
         match field_index {
             0 => {
-                y = item
-                    .parse::<i32>()
-                    .map_err(|_| ParsingError::EpochParsing)?;
+                y = item.parse::<i32>().map_err(|_| ParsingError::EpochFormat)?;
 
                 /* old RINEX problem: YY sometimes encoded on two digits */
                 if y > 79 && y <= 99 {
@@ -47,16 +45,16 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
                 }
             },
             1 => {
-                m = item.parse::<u8>().map_err(|_| ParsingError::EpochParsing)?;
+                m = item.parse::<u8>().map_err(|_| ParsingError::EpochFormat)?;
             },
             2 => {
-                d = item.parse::<u8>().map_err(|_| ParsingError::EpochParsing)?;
+                d = item.parse::<u8>().map_err(|_| ParsingError::EpochFormat)?;
             },
             3 => {
-                hh = item.parse::<u8>().map_err(|_| ParsingError::EpochParsing)?;
+                hh = item.parse::<u8>().map_err(|_| ParsingError::EpochFormat)?;
             },
             4 => {
-                mm = item.parse::<u8>().map_err(|_| ParsingError::EpochParsing)?;
+                mm = item.parse::<u8>().map_err(|_| ParsingError::EpochFormat)?;
             },
             5 => {
                 if let Some(dot) = item.find('.') {
@@ -65,13 +63,13 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
                     ss = item[..dot]
                         .trim()
                         .parse::<u8>()
-                        .map_err(|_| ParsingError::EpochParsing)?;
+                        .map_err(|_| ParsingError::EpochFormat)?;
 
                     let nanos = item[dot + 1..].trim();
 
                     ns = nanos
                         .parse::<u64>()
-                        .map_err(|_| ParsingError::EpochParsing)?;
+                        .map_err(|_| ParsingError::EpochFormat)?;
 
                     if is_nav {
                         // NAV RINEX : 100ms precision
@@ -84,7 +82,7 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
                     ss = item
                         .trim()
                         .parse::<u8>()
-                        .map_err(|_| ParsingError::EpochParsing)?;
+                        .map_err(|_| ParsingError::EpochFormat)?;
                 }
             },
             _ => {},

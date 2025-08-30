@@ -1,4 +1,10 @@
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+use crate::error::ParsingError;
+
 #[derive(Debug, Copy, Default, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Frequency {
     /// DORIS #1 frequency
     #[default]
@@ -13,6 +19,20 @@ impl From<u8> for Frequency {
         match val {
             2 => Self::DORIS2,
             _ => Self::DORIS1,
+        }
+    }
+}
+
+impl std::str::FromStr for Frequency {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.eq("1") {
+            return Ok(Self::DORIS1);
+        } else if s.eq("2") {
+            return Ok(Self::DORIS2);
+        } else {
+            return Err(ParsingError::Frequency);
         }
     }
 }

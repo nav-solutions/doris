@@ -87,6 +87,7 @@ impl Header {
             .iter()
             .filter(|station| station.code == station_code)
             .reduce(|k, _| k)
+            .cloned()
     }
 
     /// Formats the package version (possibly shortenned, in case of lengthy release)
@@ -163,7 +164,7 @@ impl Header {
 
     /// Adds one comment to mutable [Self]
     pub fn push_comment(&mut self, comment: &str) {
-        self.comments.push(comment);
+        self.comments.push(comment.to_string());
     }
 
     /// Copies and returns [Header] with one new comment.
