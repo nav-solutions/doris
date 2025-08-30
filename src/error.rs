@@ -33,6 +33,9 @@ pub enum ParsingError {
     #[error("epoch error: {0}")]
     Epoch(#[from] HifitimeError),
 
+    #[error("invalid epoch format")]
+    EpochFormat,
+
     #[error("epoch parsing error: {0}")]
     EpochParsing(#[from] HifitimeParsingError),
 }

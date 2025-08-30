@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::error::ParsingError;
+
 /// This structure is attached to DORIS file that were named
 /// according to the standard convention.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -32,7 +34,7 @@ impl std::fmt::Display for ProductionAttributes {
 }
 
 impl std::str::FromStr for ProductionAttributes {
-    type Err = Error;
+    type Err = ParsingError;
 
     fn from_str(filename: &str) -> Result<Self, Self::Err> {
         let filename = filename.to_uppercase();
@@ -40,7 +42,7 @@ impl std::str::FromStr for ProductionAttributes {
         let name_len = filename.len();
 
         if name_len != 12 && name_len != 15 {
-            return Err(Error::NonStandardFilename);
+            return Err(ParsingError::NonStandardFilename);
         }
 
         let offset = filename.find('.').unwrap_or(0);
@@ -49,7 +51,7 @@ impl std::str::FromStr for ProductionAttributes {
 
         let year = filename[offset + 1..offset + 3]
             .parse::<u32>()
-            .map_err(|_| Error::NonStandardFilename)?;
+            .map_err(|_| ParsingError::NonStandardFilename)?;
 
         Ok(Self {
             satellite,

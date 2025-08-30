@@ -2,7 +2,7 @@ use crate::{
     error::ParsingError,
     header::{Antenna, Header, Receiver, Version},
     observable::Observable,
-    prelude::{COSPAR, DOMES},
+    prelude::{Duration, Epoch, TimeScale, COSPAR, DOMES},
     station::GroundStation,
     Comments,
 };
@@ -28,9 +28,12 @@ impl Header {
         let mut receiver = Option::<Receiver>::None;
         let mut antenna = Option::<Antenna>::None;
         let mut station_url = Option::<String>::None;
+        let mut cospar = Option::<COSPAR>::None;
+        let mut l1_l2_date_offset = Duration::default();
+        let mut ground_stations = Vec::with_capacity(8);
 
         let mut observables = Vec::<Observable>::with_capacity(8);
-        let mut observable_continuation = false;
+        let mut observables_continuation = false;
 
         let mut comments = Comments::default();
 
@@ -140,33 +143,11 @@ impl Header {
                 if lic.len() > 0 {
                     license = Some(lic.to_string());
                 }
-            } else if marker.contains("CENTER OF MASS: XYZ") {
-                // TODO
-            } else if marker.contains("APPROX POSITION XYZ") {
-                let (mut x_ecef_m, mut y_ecef_m) = (0.0_f64, 0.0_f64);
-
-                for (nth, item) in content.split_ascii_whitespace().enumerate() {
-                    if let Ok(ecef_m) = item.trim().parse::<f64>() {
-                        match nth {
-                            0 => {
-                                x_ecef_m = ecef_m;
-                            },
-                            1 => {
-                                y_ecef_m = ecef_m;
-                            },
-                            2 => {
-                                z_ecef_m = ecef_m;
-                                rx_position = Some((x_ecef_m, y_ecef_m, ecef_m));
-                            },
-                            _ => {},
-                        }
-                    }
-                }
             } else if marker.contains("ANT # / TYPE") {
                 let (sn, rem) = content.split_at(20);
                 let (model, _) = rem.split_at(20);
 
-                rcvr_antenna = Some(
+                antenna = Some(
                     Antenna::default()
                         .with_model(model.trim())
                         .with_serial_number(sn.trim()),
@@ -174,15 +155,12 @@ impl Header {
             } else if marker.contains("# OF STATIONS") {
             } else if marker.contains("TIME OF FIRST OBS") {
                 let time_of_first_obs = Self::parse_time_of_obs(content)?;
-                timeof_first_obs = Some(time_of_first_obs);
+                time_of_first_obs = Some(time_of_first_obs);
             } else if marker.contains("TIME OF LAST OBS") {
                 let time_of_last_obs = Self::parse_time_of_obs(content)?;
-                timeof_last_obs = Some(time_of_last_obs);
-            } else if marker.contains("TYPES OF OBS") {
-                // these observations can serve both Observation & Meteo RINEX
-                Self::parse_v2_observables(content, constellation, &mut meteo, &mut observation);
+                time_of_last_obs = Some(time_of_last_obs);
             } else if marker.contains("SYS / # / OBS TYPES") {
-                Self::parse_doris_observables(content, &mut doris);
+                // Self::parse_observables(content);
                 observables_continuation = true;
             } else if marker.contains("COSPAR NUMBER") {
                 cospar = Some(COSPAR::from_str(content.trim())?);
@@ -194,11 +172,11 @@ impl Header {
                     .parse::<f64>()
                     .or(Err(ParsingError::DorisL1L2DateOffset))?;
 
-                doris.u2_s1_time_offset = Duration::from_microseconds(time_offset_us);
+                l1_l2_date_offset = Duration::from_microseconds(time_offset_us);
             } else if marker.contains("STATION REFERENCE") {
                 // DORIS special case
-                let station = DorisStation::from_str(content.trim())?;
-                doris.stations.push(station);
+                let station = GroundStation::from_str(content.trim())?;
+                ground_stations.push(station);
             }
         }
 
@@ -216,7 +194,7 @@ impl Header {
             receiver,
             antenna,
             cospar,
-            stations,
+            ground_stations,
         })
     }
 

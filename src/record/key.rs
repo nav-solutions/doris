@@ -2,7 +2,9 @@
 use serde::{Deserialize, Serialize};
 
 #[cfg(doc)]
-use crate::prelude::{Header, Observable};
+use crate::prelude::Header;
+
+use crate::prelude::Observable;
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

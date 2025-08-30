@@ -52,7 +52,12 @@ use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 
 use hifitime::prelude::{Duration, Epoch};
 
-use crate::{error::Error, header::Header, production::ProductionAttributes};
+use crate::{
+    error::{Error, ParsingError},
+    header::Header,
+    production::ProductionAttributes,
+    record::Record,
+};
 
 /// [Comments] found in DORIS files
 pub type Comments = Vec<String>;

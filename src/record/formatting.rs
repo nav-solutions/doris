@@ -1,4 +1,7 @@
-use crate::prelude::Header;
+use crate::{
+    error::FormattingError,
+    prelude::{Header, Record},
+};
 
 use std::io::{BufWriter, Write};
 

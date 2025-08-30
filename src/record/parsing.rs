@@ -4,7 +4,10 @@ use std::{
     str::from_utf8,
 };
 
-use crate::prelude::{Comments, Record};
+use crate::{
+    error::ParsingError,
+    prelude::{Comments, Header, Record},
+};
 
 #[cfg(feature = "log")]
 use log::error;
@@ -32,14 +35,6 @@ impl Record {
         let mut record = Record::default();
 
         let mut gnss_observables = Default::default();
-
-        if let Some(obs) = &header.obs {
-            if let Some(crinex) = &obs.crinex {
-                is_crinex = true;
-                crinex_v3 = crinex.version.major > 2;
-            }
-            gnss_observables = obs.codes.clone();
-        }
 
         // Iterate and consume, one line at a time
         while let Ok(size) = reader.read_line(&mut line_buf) {

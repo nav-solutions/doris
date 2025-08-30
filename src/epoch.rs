@@ -99,8 +99,8 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
             if y == 0 {
                 return Err(ParsingError::EpochFormat);
             }
-            let epoch = Epoch::from_gregorian_utc(y, m, d, hh, mm, ss, ns as u32);
-            Ok(epoch)
+
+            Ok(Epoch::from_gregorian_utc(y, m, d, hh, mm, ss, ns as u32))
         },
         TimeScale::TAI => {
             // Catch possible Hifitime panic on bad string content
@@ -115,6 +115,7 @@ pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, 
             if y == 0 {
                 return Err(ParsingError::EpochFormat);
             }
+
             let epoch = Epoch::from_gregorian_str(&format!(
                 "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:06} {}",
                 y, m, d, hh, mm, ss, ns, ts

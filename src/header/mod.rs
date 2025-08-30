@@ -8,7 +8,10 @@ mod version;
 use itertools::Itertools;
 use std::collections::HashMap;
 
-use crate::prelude::{Epoch, Observable, COSPAR, DOMES};
+use crate::{
+    prelude::{Duration, Epoch, GroundStation, Observable, COSPAR, DOMES},
+    Comments,
+};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -64,7 +67,7 @@ pub struct Header {
     pub scaling_factors: HashMap<Observable, f64>,
 
     /// DORIS L1/L2 date offset
-    pub l1_l2_date_offset: f64,
+    pub l1_l2_date_offset: Duration,
 
     /// DORIS [GroundStation]s
     pub ground_stations: Vec<GroundStation>,
@@ -166,7 +169,7 @@ impl Header {
     /// Copies and returns [Header] with one new comment.
     pub fn with_comment(&self, comment: &str) -> Self {
         let mut s = self.clone();
-        s.comments.push(c.to_string());
+        s.comments.push(comment.to_string());
         s
     }
 }
