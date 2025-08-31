@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader, Read};
 use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
-    prelude::{Comments, Duration, GroundStation, Header, Key, Matcher, Record, TimeScale},
+    prelude::{Comments, Duration, Epoch, GroundStation, Header, Key, Matcher, Record, TimeScale},
 };
 
 // #[cfg(feature = "log")]
@@ -64,112 +64,109 @@ impl Record {
             // tries to assemble a complete epoch
             let mut new_epoch = false;
 
-            // new epoch being detected or end of stream
-            if buf_len > 0 {
-                if line_buf.starts_with('>') || eos {
-                    new_epoch = true;
+            // new epoch
+            if line_buf.starts_with('>') || eos {
+                new_epoch = true;
 
-                    // parse date & time
-                    if buf_len < MIN_EPOCH_SIZE {
-                        return Err(ParsingError::EpochFormat);
-                    }
+                let mut epoch = Epoch::default();
+                let mut station = Option::<&GroundStation>::None;
 
-                    let epoch =
-                        parse_epoch_in_timescale(&epoch_buf[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
+                for (nth, line) in epoch_buf.lines().enumerate() {
+                    let line_len = line.len();
 
-                    println!("epoch: {}", epoch);
+                    if nth == 0 {
+                        // parse date & time
+                        epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
 
-                    // parse clock offset, if any
-                    let clock_offset_secs = &epoch_buf[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
-                        .trim()
-                        .parse::<f64>()
-                        .map_err(|_| ParsingError::ClockOffset)?;
+                        println!("epoch: {}", epoch);
 
-                    let clock_offset = Duration::from_seconds(*clock_offset_secs);
+                        // parse clock offset, if any
+                        let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
+                            .trim()
+                            .parse::<f64>()
+                            .map_err(|_| ParsingError::ClockOffset)?;
 
-                    // extrapolated clock ?
-                    let mut clock_extrapolated = false;
+                        let clock_offset = Duration::from_seconds(*clock_offset_secs);
 
-                    if line_len > CLOCK_OFFSET + CLOCK_SIZE {
-                        if line_buf[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
-                            clock_extrapolated = true;
-                        }
-                    }
+                        // extrapolated clock ?
+                        let mut clock_extrapolated = false;
 
-                    // station still unidentified
-                    let mut station = Option::<&GroundStation>::None;
-
-                    // continue parsing, identify and grab data
-                    for line in epoch_buf.lines() {
-                        // new station
-                        if line.starts_with("D") {
-                            // station identification
-                            let station_id = line[1..3]
-                                .trim()
-                                .parse::<u16>()
-                                .map_err(|_| ParsingError::StationFormat)?;
-
-                            let matcher = Matcher::ID(station_id);
-
-                            // identification
-                            if let Some(matching) = header
-                                .ground_stations
-                                .iter()
-                                .filter(|station| station.matches(&matcher))
-                                .reduce(|k, _| k)
-                            {
-                                println!("identified: {:?}", matching);
-                                station = Some(matching);
-                            } else {
-                                #[cfg(feature = "logs")]
-                                debug!("unidentified station: #{:02}", station_id);
+                        if line_len > CLOCK_OFFSET + CLOCK_SIZE {
+                            if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
+                                clock_extrapolated = true;
                             }
                         }
+                    } else {
+                        if nth == 1 {
+                            if line.starts_with("D") {
+                                // station identification
+                                let station_id = line[1..3]
+                                    .trim()
+                                    .parse::<u16>()
+                                    .map_err(|_| ParsingError::StationFormat)?;
 
-                        if let Some(station) = station {
-                            // correctly identified
-                            let key = Key {
-                                epoch,
-                                station: station.clone(),
-                            };
+                                let matcher = Matcher::ID(station_id);
 
-                            let mut offset = 0;
-                            let line = line.split_at(5).1;
-                            let size = line.len();
+                                // identification
+                                if let Some(matching) = header
+                                    .ground_stations
+                                    .iter()
+                                    .filter(|station| station.matches(&matcher))
+                                    .reduce(|k, _| k)
+                                {
+                                    println!("identified: {:?}", matching);
+                                    station = Some(matching);
+                                } else {
+                                    #[cfg(feature = "logs")]
+                                    debug!("unidentified station: #{:02}", station_id);
+                                }
+                            }
 
-                            loop {
-                                // data
-                                if offset + OBSERVABLE_WIDTH < size {
-                                    let slice = &line_buf
-                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 2];
+                            // station must be identified
+                            if let Some(station) = station {
+                                println!("line={} station={:?}", nth, station);
+
+                                // identified
+                                let key = Key {
+                                    epoch,
+                                    station: station.clone(),
+                                };
+
+                                let mut offset = 0;
+
+                                if nth == 1 {
+                                    offset += 3;
                                 }
 
-                                offset += OBSERVABLE_WIDTH;
+                                loop {
+                                    if offset + OBSERVABLE_WIDTH + 1 < line_len {
+                                        let slice = &line[offset..offset + OBSERVABLE_WIDTH];
+                                        println!("slice \"{}\"", slice);
+                                    }
 
-                                // M1 flag
-                                if offset + 1 < size {
-                                    let slice = &line_buf
-                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 1];
-                                }
+                                    offset += OBSERVABLE_WIDTH;
 
-                                offset += OBSERVABLE_WIDTH;
+                                    if offset + 1 < line_len {
+                                        let slice = &line[offset..offset + 1];
+                                        println!("slice \"{}\"", slice);
+                                    }
 
-                                // M2 flag
-                                if offset + 1 < size {
-                                    let slice = &line_buf
-                                        [offset + OBSERVABLE_WIDTH..offset + OBSERVABLE_WIDTH + 2];
-                                }
+                                    offset += 1;
 
-                                offset += 1;
+                                    if offset + 1 < line_len {
+                                        let slice = &line[offset..offset + 1];
+                                        println!("slice \"{}\"", slice);
+                                    }
 
-                                if offset >= size {
-                                    break;
+                                    offset += 1;
+
+                                    if offset >= line_len {
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-
-                    obs_ptr = 0;
                 } // epoch parsing
             } // buf_len
 
