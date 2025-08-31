@@ -3,7 +3,10 @@ use std::io::{BufRead, BufReader, Read};
 use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
-    prelude::{Comments, Duration, Epoch, GroundStation, Header, Key, Matcher, Record, TimeScale},
+    prelude::{
+        Comments, Duration, Epoch, Flag, GroundStation, Header, Key, Matcher, Measurements,
+        Observation, Record, TimeScale, SNR,
+    },
 };
 
 // #[cfg(feature = "log")]
@@ -32,12 +35,13 @@ impl Record {
         // epoch storage
         let mut epoch_buf = String::with_capacity(1024);
 
-        let mut comments = Comments::default();
         let mut record = Record::default();
 
         let mut obs_ptr = 0;
         let mut line_offset = 0;
-        let nb_observables = header.observables.len();
+
+        let observables = &header.observables;
+        let nb_observables = observables.len();
 
         // Iterate and consume, one line at a time
         while let Ok(size) = reader.read_line(&mut line_buf) {
@@ -48,13 +52,11 @@ impl Record {
 
             let line_len = line_buf.len();
 
-            // println!("line buf \"{}\"", line_buf);
-
             if line_len > 60 {
                 if line_buf.contains("COMMENT") {
                     // Comments are stored as is
                     let comment = line_buf.split_at(60).0.trim_end();
-                    comments.push(comment.to_string());
+                    record.comments.push(comment.to_string());
 
                     line_buf.clear();
                     continue; // skip parsing
@@ -68,6 +70,7 @@ impl Record {
             if line_buf.starts_with('>') || eos {
                 new_epoch = true;
 
+                let mut obs_ptr = 0;
                 let mut epoch = Epoch::default();
                 let mut station = Option::<&GroundStation>::None;
 
@@ -114,55 +117,109 @@ impl Record {
                                     .filter(|station| station.matches(&matcher))
                                     .reduce(|k, _| k)
                                 {
-                                    println!("identified: {:?}", matching);
                                     station = Some(matching);
                                 } else {
                                     #[cfg(feature = "logs")]
                                     debug!("unidentified station: #{:02}", station_id);
                                 }
                             }
+                        }
 
-                            // station must be identified
-                            if let Some(station) = station {
-                                println!("line={} station={:?}", nth, station);
+                        // station must be identified
+                        if let Some(station) = station {
+                            println!("line={} station={:?}", nth, station);
 
-                                // identified
-                                let key = Key {
-                                    epoch,
-                                    station: station.clone(),
-                                };
+                            // identified
+                            let key = Key {
+                                epoch,
+                                station: station.clone(),
+                            };
 
-                                let mut offset = 0;
+                            let mut offset = 3;
 
-                                if nth == 1 {
-                                    offset += 3;
+                            loop {
+                                if offset + OBSERVABLE_WIDTH + 1 < line_len {
+                                    let slice = &line[offset..offset + OBSERVABLE_WIDTH];
+                                    // println!("slice \"{}\"", slice);
+
+                                    match slice.trim().parse::<f64>() {
+                                        Ok(value) => {
+                                            let mut observation = Observation::default();
+
+                                            if let Some(measurements) =
+                                                record.measurements.get_mut(&key)
+                                            {
+                                                measurements.add_observation(
+                                                    observables[obs_ptr],
+                                                    observation,
+                                                );
+                                            } else {
+                                                let mut measurements = Measurements::default();
+                                                measurements.add_observation(
+                                                    observables[obs_ptr],
+                                                    observation,
+                                                );
+                                                record
+                                                    .measurements
+                                                    .insert(key.clone(), measurements);
+                                            }
+                                        },
+                                        Err(e) => {
+                                            println!("observation parsing error: {}", e);
+                                        },
+                                    }
                                 }
 
-                                loop {
-                                    if offset + OBSERVABLE_WIDTH + 1 < line_len {
-                                        let slice = &line[offset..offset + OBSERVABLE_WIDTH];
-                                        println!("slice \"{}\"", slice);
+                                offset += OBSERVABLE_WIDTH;
+
+                                if offset + 1 < line_len {
+                                    let slice = &line[offset..offset + 1];
+                                    // println!("slice \"{}\"", slice);
+
+                                    if let Ok(snr) = slice.trim().parse::<SNR>() {
+                                        if let Some(measurements) =
+                                            record.measurements.get_mut(&key)
+                                        {
+                                            if let Some(observation) = measurements
+                                                .observations
+                                                .get_mut(&observables[obs_ptr])
+                                            {
+                                                observation.snr = Some(snr);
+                                            }
+                                        }
                                     }
+                                }
 
-                                    offset += OBSERVABLE_WIDTH;
+                                offset += 1;
 
-                                    if offset + 1 < line_len {
-                                        let slice = &line[offset..offset + 1];
-                                        println!("slice \"{}\"", slice);
+                                if offset + 1 < line_len {
+                                    let slice = &line[offset..offset + 1];
+                                    // println!("slice \"{}\"", slice);
+
+                                    if let Ok(flag) = slice.trim().parse::<Flag>() {
+                                        if let Some(measurements) =
+                                            record.measurements.get_mut(&key)
+                                        {
+                                            if let Some(observation) = measurements
+                                                .observations
+                                                .get_mut(&observables[obs_ptr])
+                                            {
+                                                observation.phase_flag = Some(flag);
+                                            }
+                                        }
                                     }
+                                }
 
-                                    offset += 1;
+                                offset += 1;
+                                obs_ptr += 1;
 
-                                    if offset + 1 < line_len {
-                                        let slice = &line[offset..offset + 1];
-                                        println!("slice \"{}\"", slice);
-                                    }
+                                if offset >= line_len {
+                                    break;
+                                }
 
-                                    offset += 1;
-
-                                    if offset >= line_len {
-                                        break;
-                                    }
+                                // detect potential errors
+                                if obs_ptr >= nb_observables {
+                                    break;
                                 }
                             }
                         }

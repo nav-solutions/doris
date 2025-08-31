@@ -21,6 +21,9 @@ pub enum ParsingError {
     #[error("failed to parse phase observation flag")]
     ObservationFlag,
 
+    #[error("observation SNR value parsing")]
+    SNRValue,
+
     #[error("observable parsing error")]
     Observable,
 
