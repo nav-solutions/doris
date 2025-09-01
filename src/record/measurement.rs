@@ -1,5 +1,5 @@
 #[cfg(doc)]
-use crate::prelude::{GroundStation, TimeScale, DORIS};
+use crate::prelude::{TimeScale, DORIS};
 
 use crate::{
     error::ParsingError,
