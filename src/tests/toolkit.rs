@@ -64,7 +64,7 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
 
                             assert!(
                                 error < 1,
-                                "erroenous clock offset reported @ {:?} (offset={} err={}ns)",
+                                "invalid clock offset reported @ {:?} (offset={} err={}ns)",
                                 key,
                                 sat_offset.offset,
                                 error
