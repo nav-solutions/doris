@@ -22,7 +22,7 @@ pub enum Observable {
     /// performed in space.
     UnambiguousPhaseRange(Frequency),
 
-    /// Received signal power (in dBm).  
+    /// Received signal power, in \[dBm\].  
     /// All frequency dependent DORIS measurements (=signal measurements) were
     /// performed in space.  
     Power(Frequency),
@@ -36,7 +36,7 @@ pub enum Observable {
     /// Moisture rate at ground station level at epoch of spaceborn observation, as saturation percentage.
     HumidityRate,
 
-    /// f1 / f2 frequency ratio (dimensionless), image of the frequency drift
+    /// f1 / f2 frequency ratio (dimensionless)
     FrequencyRatio,
 }
 
