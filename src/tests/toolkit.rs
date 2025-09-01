@@ -1,4 +1,4 @@
-use crate::prelude::{ClockOffset, Epoch, Key, Matcher, Observable, Observation, DORIS};
+use crate::prelude::{ClockOffset, Epoch, EpochFlag, Key, Matcher, Observable, Observation, DORIS};
 
 #[derive(Debug)]
 pub enum Measurement {
@@ -8,6 +8,7 @@ pub enum Measurement {
 
 pub struct TestPoint {
     pub epoch: Epoch,
+    pub flag: EpochFlag,
     pub station_id: u16,
     pub measurements: Vec<Measurement>,
 }
@@ -23,6 +24,7 @@ impl TestPoint {
 
         Key {
             station,
+            flag: self.flag,
             epoch: self.epoch,
         }
     }

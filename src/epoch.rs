@@ -2,8 +2,8 @@
 
 use crate::prelude::{Epoch, ParsingError, TimeScale};
 
-/// Formats given epoch to string, matching standard specifications
-pub(crate) fn format(epoch: Epoch, revision: u8) -> String {
+/// Formats given [Epoch] according to standard specifications.
+pub(crate) fn format(epoch: Epoch) -> String {
     let (y, m, d, hh, mm, ss, nanos) = epoch_decompose(epoch);
 
     format!(

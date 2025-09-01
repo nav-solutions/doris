@@ -4,8 +4,8 @@ use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
     prelude::{
-        ClockOffset, Comments, Duration, Epoch, GroundStation, Header, Key, Matcher, Measurements,
-        Observation, Record, TimeScale, SNR,
+        ClockOffset, Comments, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher,
+        Measurements, Observation, Record, TimeScale, SNR,
     },
 };
 
@@ -72,6 +72,7 @@ impl Record {
 
                 let mut obs_ptr = 0;
                 let mut epoch = Epoch::default();
+                let mut flag = EpochFlag::default();
                 let mut station = Option::<&GroundStation>::None;
                 let mut clock_offset = Option::<ClockOffset>::None;
 
@@ -133,6 +134,7 @@ impl Record {
                             // identified
                             let key = Key {
                                 epoch,
+                                flag,
                                 station: station.clone(),
                             };
 

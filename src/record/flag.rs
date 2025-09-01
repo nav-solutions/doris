@@ -1,65 +1,60 @@
-use std::str::FromStr;
-
 use crate::error::ParsingError;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// Flag attached to Phase locked observations,
-/// describing the lock status.
+/// [EpochFlag] is attached to DORIS epochs,
+/// describing sampling conditions and attached data.
 #[derive(Copy, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Flag {
-    /// Observation is sane
+pub enum EpochFlag {
+    /// Epoch is OK (sane)
     #[default]
-    Ok,
+    OK,
 
     /// Power failure since previous epoch
     PowerFailure,
 
-    /// Antenna is being moved at current epoch
+    /// Special event: antenna being moved since previous measurement
     AntennaBeingMoved,
 
-    /// Site has changed, received has moved since last epoch
-    NewSiteOccupation,
+    /// Special event: new site occupation (marks end of kinematic data)
+    NewSiteEndofKinematics,
 
-    /// New information to come after this epoch
-    HeaderInformationFollows,
+    /// Header information is to follow (not actual measurements)
+    HeaderDataFollowing,
 
-    /// External event - significant event at this epoch.
+    /// External event (other)
     ExternalEvent,
-
-    /// Cycle slip at this epoch.
-    CycleSlip,
 }
 
-impl FromStr for Flag {
+impl std::str::FromStr for EpochFlag {
     type Err = ParsingError;
 
+    /// Parses [EpochFlag] from standard values.    
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "0" => Ok(Self::Ok),
+            "0" => Ok(Self::OK),
             "1" => Ok(Self::PowerFailure),
             "2" => Ok(Self::AntennaBeingMoved),
-            "3" => Ok(Self::NewSiteOccupation),
-            "4" => Ok(Self::HeaderInformationFollows),
+            "3" => Ok(Self::NewSiteEndofKinematics),
+            "4" => Ok(Self::HeaderDataFollowing),
             "5" => Ok(Self::ExternalEvent),
-            "6" => Ok(Self::CycleSlip),
-            _ => Err(ParsingError::ObservationFlag),
+            _ => Err(ParsingError::EpochFlag),
         }
     }
 }
 
-impl std::fmt::Display for Flag {
+impl std::fmt::Display for EpochFlag {
+    /// Formats [EpochFlag] according to standards.
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Ok => "0".fmt(f),
+            Self::OK => "0".fmt(f),
             Self::PowerFailure => "1".fmt(f),
             Self::AntennaBeingMoved => "2".fmt(f),
-            Self::NewSiteOccupation => "3".fmt(f),
-            Self::HeaderInformationFollows => "4".fmt(f),
+            Self::NewSiteEndofKinematics => "3".fmt(f),
+            Self::HeaderDataFollowing => "4".fmt(f),
             Self::ExternalEvent => "5".fmt(f),
-            Self::CycleSlip => "6".fmt(f),
         }
     }
 }

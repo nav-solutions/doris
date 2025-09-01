@@ -95,7 +95,7 @@ impl std::str::FromStr for SNR {
             "weak" => Ok(Self::DbHz24_29),
             "strong" => Ok(Self::DbHz30_35),
             "excellent" => Ok(Self::DbHz48_53),
-            _ => Err(ParsingError::SNRValue),
+            _ => Err(ParsingError::SNR),
         }
     }
 }
