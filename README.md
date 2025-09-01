@@ -23,6 +23,12 @@ References:
 - [RINEX format (Wikipedia)](https://en.wikipedia.org/wiki/RINEX) 
 - DORIS format
 
+NB: this parser is limited to the DORIS format exclusively, 
+her RINEX like formats have their own parser:
+  - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
+  - [IONEX (Ionosphere) Maps](https://github.com/nav-solutions/ionex)
+
+
 To contribute or join our community, you may:
 
 - open an [Issue on Github.com](https://github.com/nav-solutions/doris/issues) 
@@ -32,10 +38,14 @@ To contribute or join our community, you may:
 ## Advantages :rocket: 
 
 - Fast
-- NB: this parser is limited to the DORIS format exclusively, 
-other RINEX like formats have their own parser:
-  - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
-  - [IONEX (Ionosphere) Maps](https://github.com/nav-solutions/ionex)
+- Seamless gzip compression support on `flate2` crate feature
+- File formatting
+
+## Inconvenients
+
+- Epoch events are not really well supported at the moment (epoch flag >1).
+This parser will store all observation data streams,
+disregardning potential events in between (should not cause a panic).
 
 ## Citation and referencing
 

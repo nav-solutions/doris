@@ -1,3 +1,4 @@
+mod clock;
 mod formatting;
 mod key;
 mod measurement;
@@ -15,8 +16,9 @@ use crate::prelude::{Comments, Observable};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+pub use clock::ClockOffset;
 pub use key::Key;
-pub use measurement::{ClockOffset, Measurements};
+pub use measurement::Measurements;
 pub use observation::Observation;
 pub use snr::SNR;
 

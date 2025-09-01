@@ -99,15 +99,56 @@ fn v3_cs2rx18164() {
 
     // Example: retrieve site observation
 
+    let (l1, l2) = (
+        Observable::from_str("L1").unwrap(),
+        Observable::from_str("L2").unwrap(),
+    );
+    let (c1, c2) = (
+        Observable::from_str("C1").unwrap(),
+        Observable::from_str("C2").unwrap(),
+    );
+    let (w1, w2) = (
+        Observable::from_str("W1").unwrap(),
+        Observable::from_str("W2").unwrap(),
+    );
+
+    let f1f2 = Observable::from_str("F").unwrap();
+
+    let press = Observable::from_str("P").unwrap();
+    let temp = Observable::from_str("T").unwrap();
+    let moist = Observable::from_str("H").unwrap();
+
     // testbench
     testbench(
         &doris,
         vec![TestPoint {
             epoch: Epoch::from_str("2018-06-13T00:00:33.1799478 TAI").unwrap(),
             station_id: 1,
-            measurements: vec![Measurement::ClockOffset(ClockOffset::from_measured_offset(
-                Duration::from_seconds(-4.326631626),
-            ))],
+            measurements: vec![
+                Measurement::ClockOffset(ClockOffset::from_measured_offset(
+                    Duration::from_seconds(-4.326631626),
+                )),
+                Measurement::Observation((l1, Observation::default().with_value(-677713.668))),
+                Measurement::Observation((l2, Observation::default().with_value(-133531.158))),
+                Measurement::Observation((
+                    c1,
+                    Observation::default()
+                        .with_value(-139623093.08413)
+                        .with_snr(SNR::DbHz12),
+                )),
+                Measurement::Observation((
+                    c2,
+                    Observation::default()
+                        .with_value(-139623340.44813)
+                        .with_snr(SNR::DbHz12),
+                )),
+                Measurement::Observation((w1, Observation::default().with_value(-128.150))),
+                Measurement::Observation((w2, Observation::default().with_value(-121.850))),
+                Measurement::Observation((f1f2, Observation::default().with_value(169.370))),
+                Measurement::Observation((press, Observation::default().with_value(1003.702))),
+                Measurement::Observation((temp, Observation::default().with_value(4.895))),
+                Measurement::Observation((moist, Observation::default().with_value(81.602))),
+            ],
         }],
     );
 

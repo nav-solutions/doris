@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::ParsingError, prelude::SNR};
 
-/// Signal [Observation]
+/// Signal [Observation].
 #[derive(Copy, Default, Clone, Debug, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Observation {
@@ -34,7 +34,8 @@ impl Observation {
     //     self
     // }
 
-    /// Defines new DORIS measurement with desired value
+    /// Defines new DORIS measurement with desired value.
+    /// Unit and meaning is dependent on attached [Observable].
     pub fn with_value(mut self, value: f64) -> Self {
         self.value = value;
         self

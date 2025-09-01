@@ -147,7 +147,8 @@ impl Record {
 
                                     match slice.trim().parse::<f64>() {
                                         Ok(value) => {
-                                            let mut observation = Observation::default();
+                                            let mut observation =
+                                                Observation::default().with_value(value);
 
                                             if let Some(measurements) =
                                                 record.measurements.get_mut(&key)

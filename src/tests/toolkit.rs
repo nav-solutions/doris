@@ -75,9 +75,19 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
                             match measurements.observations.get(&test_observable) {
                                 Some(observed_value) => {
                                     assert_eq!(
-                                        observed_value, test_value,
-                                        "invalid {} measurement @ {:?}",
+                                        observed_value.snr, test_value.snr,
+                                        "invalid {} SNR reported @ {:?}",
                                         test_observable, key
+                                    );
+
+                                    let error = (observed_value.value - test_value.value).abs();
+                                    assert!(
+                                        error < 1.0E-3,
+                                        "invalid {} measurement @ {:?} (value={} error={})",
+                                        test_observable,
+                                        key,
+                                        observed_value.value,
+                                        error
                                     );
 
                                     found = true;
