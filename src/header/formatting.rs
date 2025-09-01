@@ -1,15 +1,32 @@
-//! RINEX header formatting
-
 use crate::{fmt_comment, fmt_doris, header::Header, prelude::FormattingError};
 
-use std::io::{BufWriter, Write};
+use std::{
+    io::{BufWriter, Write},
+    str::FromStr,
+};
+
+use hifitime::efmt::{Format, Formatter};
 
 impl Header {
     /// Formats [Header] into [Write]able interface, using efficient buffering.
     pub fn format<W: Write>(&self, w: &mut BufWriter<W>) -> Result<(), FormattingError> {
-        writeln!(w, "{:10}.{:02}                  O                     D              RINEX VERSION / TYPE", self.version.major, self.version.minor)?;
+        writeln!(
+            w,
+            "{}",
+            fmt_doris(
+                &format!(
+                    "{:6}.{:02}           O                   D",
+                    self.version.major, self.version.minor
+                ),
+                "RINEX VERSION / TYPE"
+            )
+        )?;
 
         writeln!(w, "{}", fmt_doris(&self.satellite, "SATELLITE NAME"))?;
+
+        if let Some(cospar) = &self.cospar {
+            writeln!(w, "{}", fmt_doris(&cospar.to_string(), "COSPAR"))?;
+        }
 
         self.format_prog_runby(w)?;
         self.format_observer_agency(w)?;
@@ -22,12 +39,34 @@ impl Header {
 
         writeln!(w, "{}", fmt_doris(&string, "SYS / # / OBS TYPES"))?;
 
-        if let Some(time_of_first_obs) = self.time_of_first_observation {
-            writeln!(w, "{}", fmt_doris("", "TIME OF FIRST OBS"))?;
+        if let Some(epoch) = self.time_of_first_observation {
+            let (year, month, day, hours, mins, secs, nanos) = epoch.to_gregorian(epoch.time_scale);
+            writeln!(
+                w,
+                "{}",
+                fmt_doris(
+                    &format!(
+                        "{:6} {:5} {:5} {:5} {:5} {:4}.{}    DOR",
+                        year, month, day, hours, mins, secs, nanos
+                    ),
+                    "TIME OF FIRST OBS"
+                )
+            )?;
         }
 
-        if let Some(time_of_last_obs) = self.time_of_last_observation {
-            writeln!(w, "{}", fmt_doris("", "TIME OF LAST OBS"))?;
+        if let Some(epoch) = self.time_of_last_observation {
+            let (year, month, day, hours, mins, secs, nanos) = epoch.to_gregorian(epoch.time_scale);
+            writeln!(
+                w,
+                "{}",
+                fmt_doris(
+                    &format!(
+                        "{:6} {:5} {:5} {:5} {:5} {:4}.{}    DOR",
+                        year, month, day, hours, mins, secs, nanos
+                    ),
+                    "TIME OF LAST OBS"
+                )
+            )?;
         }
 
         writeln!(
