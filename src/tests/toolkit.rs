@@ -59,12 +59,16 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
                             let error = (sat_offset.offset.total_nanoseconds()
                                 - test_offset.offset.total_nanoseconds())
                             .abs();
+
                             assert!(
                                 error < 1,
-                                "erroenous clock offset reported @ {:?} (err={}ns)",
+                                "erroenous clock offset reported @ {:?} (offset={} err={}ns)",
                                 key,
+                                sat_offset.offset,
                                 error
                             );
+
+                            found = true;
                         },
                         Measurement::Observation((test_observable, test_value)) => {
                             // locate
@@ -75,6 +79,8 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
                                         "invalid {} measurement @ {:?}",
                                         test_observable, key
                                     );
+
+                                    found = true;
                                 },
                                 None => {
                                     panic!("missing {} observation @ {:?}", test_observable, key);

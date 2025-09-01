@@ -106,7 +106,7 @@ fn v3_cs2rx18164() {
             epoch: Epoch::from_str("2018-06-13T00:00:33.1799478 TAI").unwrap(),
             station_id: 1,
             measurements: vec![Measurement::ClockOffset(ClockOffset::from_measured_offset(
-                Duration::from_microseconds(-4.326631),
+                Duration::from_seconds(-4.326631626),
             ))],
         }],
     );

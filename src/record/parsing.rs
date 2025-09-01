@@ -21,7 +21,7 @@ impl Record {
     ) -> Result<Self, ParsingError> {
         const EPOCH_SIZE: usize = "YYYY MM DD HH MM SS.NNNNNNNNN  0".len();
         const CLOCK_OFFSET: usize = 38;
-        const CLOCK_SIZE: usize = 14;
+        const CLOCK_SIZE: usize = 19;
         const MIN_EPOCH_SIZE: usize = EPOCH_SIZE + CLOCK_SIZE + 2;
         const OBSERVABLE_WIDTH: usize = 14;
 
@@ -81,8 +81,6 @@ impl Record {
                     if nth == 0 {
                         // parse date & time
                         epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
-
-                        println!("epoch: {}", epoch);
 
                         // parse clock offset, if any
                         let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]

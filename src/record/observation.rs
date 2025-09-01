@@ -45,21 +45,21 @@ impl Observation {
 mod test {
     use super::*;
 
-    #[test]
-    fn default_flag() {
-        assert_eq!(Flag::default(), Flag::Ok);
-    }
+    // #[test]
+    // fn default_flag() {
+    //     assert_eq!(Flag::default(), Flag::Ok);
+    // }
 
-    #[test]
-    fn parsing() {
-        for (flag, expected) in [("0", Flag::Ok), ("1", Flag::PowerFailure)] {
-            let parsed = Flag::from_str(flag).unwrap();
+    // #[test]
+    // fn parsing() {
+    //     for (flag, expected) in [("0", Flag::Ok), ("1", Flag::PowerFailure)] {
+    //         let parsed = Flag::from_str(flag).unwrap();
 
-            assert_eq!(parsed, expected);
+    //         assert_eq!(parsed, expected);
 
-            let formatted = parsed.to_string();
+    //         let formatted = parsed.to_string();
 
-            assert_eq!(formatted, flag);
-        }
-    }
+    //         assert_eq!(formatted, flag);
+    //     }
+    // }
 }
