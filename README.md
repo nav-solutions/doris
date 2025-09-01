@@ -12,9 +12,11 @@ DORIS
 `doris-rs` is dedicated to DORIS (special RINEX) files parsing, processing
 and production.
 
-The DORIS format is a special RINEX Observation format. Unlike RINEX observations,
-the measurement is airborne and consists in observing a network of ground stations.
 Each DORIS file represents one measurement system, that means one satellite.
+The DORIS format is a special RINEX Observation format. Unlike RINEX observations,
+the measurement are performed spaceborn and consists in observing a network of ground stations.
+DORIS is more complex than simple Observation RINEX, and also contains ground based information
+at the time of the spaceborn observation (like temperature on the ground).
 
 References:
 
