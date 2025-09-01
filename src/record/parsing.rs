@@ -83,24 +83,29 @@ impl Record {
                         // parse date & time
                         epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
 
-                        println!("Epoch={}", epoch);
+                        // println!("Epoch={}", epoch);
+
+                        let mut measurement = Measurements::default();
 
                         // parse clock offset, if any
-                        let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
-                            .trim()
-                            .parse::<f64>()
-                            .map_err(|_| ParsingError::ClockOffset)?;
+                        if line_len >= CLOCK_OFFSET + CLOCK_SIZE {
+                            let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
+                                .trim()
+                                .parse::<f64>()
+                                .map_err(|_| ParsingError::ClockOffset)?;
 
-                        let dt = Duration::from_seconds(*clock_offset_secs);
-                        clock_offset = Some(ClockOffset::from_measured_offset(dt));
+                            let dt = Duration::from_seconds(*clock_offset_secs);
+                            clock_offset = Some(ClockOffset::from_measured_offset(dt));
 
-                        // clock extrapolation flag
-                        if line_len > CLOCK_OFFSET + CLOCK_SIZE {
-                            if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
-                                if let Some(clock_offset) = &mut clock_offset {
-                                    clock_offset.extrapolated = true;
+                            // clock extrapolation flag
+                            if line_len > CLOCK_OFFSET + CLOCK_SIZE {
+                                if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
+                                    if let Some(clock_offset) = &mut clock_offset {
+                                        clock_offset.extrapolated = true;
+                                    }
                                 }
                             }
+                            measurement.satellite_clock_offset = clock_offset;
                         }
                     } else {
                         if line.starts_with("D") {
@@ -134,11 +139,7 @@ impl Record {
                             // println!("line={} station={:?}", nth, station);
 
                             // identified
-                            let key = Key {
-                                epoch,
-                                flag,
-                                station: station.clone(),
-                            };
+                            let key = Key { epoch, flag };
 
                             let mut offset = 3;
 
@@ -162,6 +163,7 @@ impl Record {
                                                 record.measurements.get_mut(&key)
                                             {
                                                 measurements.add_observation(
+                                                    station.clone(),
                                                     observables[obs_ptr],
                                                     observation,
                                                 );
@@ -169,6 +171,7 @@ impl Record {
                                                 let mut measurements = Measurements::default();
 
                                                 measurements.add_observation(
+                                                    station.clone(),
                                                     observables[obs_ptr],
                                                     observation,
                                                 );
@@ -196,12 +199,12 @@ impl Record {
                                         if let Some(measurements) =
                                             record.measurements.get_mut(&key)
                                         {
-                                            if let Some(observation) = measurements
-                                                .observations
-                                                .get_mut(&observables[obs_ptr])
-                                            {
-                                                observation.snr = Some(snr);
-                                            }
+                                            // if let Some(observation) = measurements
+                                            //     .observations
+                                            //     .get_mut(&observables[obs_ptr])
+                                            // {
+                                            //     observation.snr = Some(snr);
+                                            // }
                                         }
                                     }
                                 }

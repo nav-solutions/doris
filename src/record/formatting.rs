@@ -1,8 +1,9 @@
 use crate::{
-    epoch::format as format_epoch,
     error::FormattingError,
-    prelude::{Epoch, EpochFlag, GroundStation, Header, Key, Record},
+    prelude::{Epoch, EpochFlag, GroundStation, Header, Key, ObservationKey, Record},
 };
+
+use itertools::Itertools;
 
 use std::io::{BufWriter, Write};
 
@@ -17,81 +18,62 @@ impl Record {
         let num_observables = header.observables.len();
 
         // browse in chronological order
-        for (epoch, flag) in self.epochs_iter() {
-            write!(writer, "> {}00  {}", format_epoch(epoch), flag)?;
+        for (key, measurements) in self.measurements.iter() {
+            let (year, month, day, hours, mins, secs, nanos) =
+                key.epoch.to_gregorian(key.epoch.time_scale);
 
-            // determine number of station at this epoch
-            let mut num_stations = 0;
-            let mut prev_code = 0;
+            write!(
+                writer,
+                "> {:04} {:02} {:02} {:02} {:02} {:02}.{:09}  {}",
+                year, month, day, hours, mins, secs, nanos, key.flag
+            )?;
 
-            for station in header.ground_stations.iter() {
-                let key = Key {
-                    epoch,
-                    flag,
-                    station: station.clone(),
-                };
-
-                if self.measurements.get(&key).is_some() {
-                    num_stations += 1;
-                }
-
-                prev_code = station.code;
-            }
-
+            // number of station at this epoch
+            let num_stations = measurements
+                .observations
+                .keys()
+                .map(|k| k.station.code)
+                .unique()
+                .count();
             write!(writer, "{:3}", num_stations)?;
 
-            match flag {
+            // conclude line with clock offset
+            if let Some(clock_offset) = measurements.satellite_clock_offset {
+                write!(
+                    writer,
+                    "       {:.9} {}\n",
+                    clock_offset.offset.to_seconds(),
+                    clock_offset.extrapolated as u8
+                )?;
+            } else {
+                write!(writer, "\n")?;
+            }
+
+            match key.flag {
                 EpochFlag::OK | EpochFlag::PowerFailure => {
                     // browse by station ID#
-                    for station in header.ground_stations.iter() {
-                        let key = Key {
-                            epoch,
-                            flag,
-                            station: station.clone(),
-                        };
+                    for (nth_station, station) in header.ground_stations.iter().enumerate() {
+                        write!(writer, "D{:02}", station.code)?;
 
-                        if let Some(measurements) = self.measurements.get(&key) {
-                            // conclude with clock offset (if any)
-                            if let Some(clock_offset) = measurements.satellite_clock_offset {
-                                write!(
-                                    writer,
-                                    "{:13.3} {}\n",
-                                    clock_offset.offset.to_seconds(),
-                                    clock_offset.extrapolated as u8
-                                )?;
+                        // following header specs
+                        for (nth_observable, observable) in header.observables.iter().enumerate() {
+                            let obs_key = ObservationKey {
+                                observable: *observable,
+                                station: station.clone(),
+                            };
+
+                            if let Some(observation) = measurements.observations.get(&obs_key) {
+                                write!(writer, "{:14.3}  ", observation.value)?;
                             } else {
-                                write!(writer, "\n")?;
+                                // BLANK
+                                write!(writer, "                  ")?;
                             }
 
-                            // browse by observables specs
-                            for (nth_observable, hd_observable) in
-                                header.observables.iter().enumerate()
-                            {
-                                if nth_observable == 0 {
-                                    write!(writer, "D{:02}", station.code)?;
-                                }
-
-                                if let Some(observation) = measurements
-                                    .observations
-                                    .iter()
-                                    .filter_map(|(observable, observation)| {
-                                        if observable == hd_observable {
-                                            Some(observation)
-                                        } else {
-                                            None
-                                        }
-                                    })
-                                    .reduce(|k, _| k)
-                                {
-                                    write!(writer, "{:14.3}  ", observation.value)?;
-
-                                    if nth_observable == num_observables - 1 {
-                                        write!(writer, "\n")?;
-                                    } else {
-                                        if (nth_observable % 5) == 4 {
-                                            write!(writer, "\n   ")?;
-                                        }
-                                    }
+                            if nth_observable == num_observables - 1 {
+                                write!(writer, "\n")?;
+                            } else {
+                                if (nth_observable % 5) == 4 {
+                                    write!(writer, "\n   ")?;
                                 }
                             }
                         }

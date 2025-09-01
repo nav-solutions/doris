@@ -15,7 +15,4 @@ pub struct Key {
 
     /// [Epoch] of measurement
     pub epoch: Epoch,
-
-    /// [GroundStation] being observed
-    pub station: GroundStation,
 }
