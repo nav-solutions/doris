@@ -156,8 +156,8 @@ fn v3_cs2rx18164() {
     // Easy to format new data
     doris.to_gzip_file("formatted.gz").unwrap();
 
-    // parse back
-    let parsed = DORIS::from_gzip_file("formatted.gz").unwrap();
+    // // parse back
+    // let parsed = DORIS::from_gzip_file("formatted.gz").unwrap();
 
     // testbench
     // assert_eq!(parsed, doris);

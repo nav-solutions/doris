@@ -16,7 +16,7 @@ impl Record {
     ) -> Result<(), FormattingError> {
         // browse in chronological order
         for (epoch, flag) in self.epochs_iter() {
-            writeln!(writer, "> {} 0 1", format_epoch(epoch))?;
+            write!(writer, "> {}00  {}  1", format_epoch(epoch), flag)?; // TODO: nb stations!
 
             match flag {
                 EpochFlag::OK | EpochFlag::PowerFailure => {
@@ -29,8 +29,43 @@ impl Record {
                         };
 
                         if let Some(measurements) = self.measurements.get(&key) {
-                            for (key, value) in self.measurements.iter() {
-                                writeln!(writer, "D{:02}", station.code)?;
+                            // conclude with clock offset (if any)
+                            if let Some(clock_offset) = measurements.satellite_clock_offset {
+                                write!(
+                                    writer,
+                                    "{:14.3} {}\n",
+                                    clock_offset.offset.to_seconds(),
+                                    clock_offset.extrapolated as u8
+                                )?;
+                            } else {
+                                write!(writer, "\n")?;
+                            }
+
+                            // browse by observables specs
+                            for (nth_observable, hd_observable) in
+                                header.observables.iter().enumerate()
+                            {
+                                if nth_observable == 0 {
+                                    write!(writer, "D{:02}", station.code)?;
+                                }
+
+                                if let Some(observation) = measurements
+                                    .observations
+                                    .iter()
+                                    .filter_map(|(observable, observation)| {
+                                        if observable == hd_observable {
+                                            Some(observation)
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .reduce(|k, _| k)
+                                {
+                                    write!(writer, "{:14.3}  ", observation.value)?;
+                                    if (nth_observable % 5) == 4 {
+                                        write!(writer, "\n")?;
+                                    }
+                                }
                             }
                         }
                     }

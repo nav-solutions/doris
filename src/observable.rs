@@ -105,6 +105,20 @@ impl std::fmt::Display for Observable {
     }
 }
 
+impl std::fmt::LowerHex for Observable {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Pressure => write!(f, "P"),
+            Self::Temperature => write!(f, "T"),
+            Self::HumidityRate => write!(f, "H"),
+            Self::FrequencyRatio => write!(f, "F"),
+            Self::PseudoRange(freq) => write!(f, "C{}", freq),
+            Self::UnambiguousPhaseRange(freq) => write!(f, "L{}", freq),
+            Self::Power(freq) => write!(f, "W{}", freq),
+        }
+    }
+}
+
 impl std::str::FromStr for Observable {
     type Err = ParsingError;
 

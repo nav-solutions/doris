@@ -7,6 +7,7 @@ mod observation;
 mod parsing;
 mod snr;
 
+use itertools::Itertools;
 use std::collections::BTreeMap;
 
 #[cfg(doc)]
@@ -45,6 +46,6 @@ impl Record {
 
     /// Obtain a chronological ([Epoch], and [EpochFlag]) [Iterator]
     pub fn epochs_iter(&self) -> Box<dyn Iterator<Item = (Epoch, EpochFlag)> + '_> {
-        Box::new([].into_iter())
+        Box::new(self.measurements.keys().map(|k| (k.epoch, k.flag)).unique())
     }
 }
