@@ -4,31 +4,39 @@ use serde::{Deserialize, Serialize};
 use crate::{error::ParsingError, frequency::Frequency};
 
 /// [Observable] describes both frequency and physics.
-/// For example, [Observable::PhaseRange] and [Observable::Power] are two different physics.
+/// For example, [Observable::UnambiguousPhaseRange] and [Observable::Power] are two different physics.
 /// DORIS files also provides information sampled at the ground station level for high
 /// precision models (like pressure and moisture rate).
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash, Ord, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Observable {
-    /// Carrier phase observation (in meters, not cycles)
-    PhaseRange(Frequency),
-
-    /// Decoded Pseudo range (in meters)
+    /// Decoded Pseudo range (in meters).  
+    /// All frequency dependent DORIS measurements (=signal measurements) were
+    /// performed in space.
     PseudoRange(Frequency),
 
-    /// Received signal power (in dBm)
+    /// Unambiguous carrier phase observation (in meters, not cycles).  
+    /// Unlike standard RINEX observations, ambiguities have been resolved
+    /// prior publishing a DORIS file.
+    /// All frequency dependent DORIS measurements (=signal measurements) were
+    /// performed in space.
+    UnambiguousPhaseRange(Frequency),
+
+    /// Received signal power (in dBm).  
+    /// All frequency dependent DORIS measurements (=signal measurements) were
+    /// performed in space.  
     Power(Frequency),
 
-    /// Pressure at ground station level, in hPa.
+    /// Pressure at ground station level at epoch of spaceborn observation, in \[hPa\].
     Pressure,
 
-    /// Dry temperature at ground station level, in celcius degrees.
+    /// Dry temperature at ground station level at epoch of spaceborn observation, in celcius degrees.
     Temperature,
 
-    /// Moisture rate at ground station level, as saturation percentage.
+    /// Moisture rate at ground station level at epoch of spaceborn observation, as saturation percentage.
     HumidityRate,
 
-    /// DORIS frequencies ratio (dimensionless), image of the frequency drift
+    /// f1 / f2 frequency ratio (dimensionless), image of the frequency drift
     FrequencyRatio,
 }
 
@@ -42,9 +50,13 @@ impl Observable {
     /// Returns true if both [Observable]s come from the same [Frequency]
     pub fn same_frequency(&self, rhs: &Observable) -> bool {
         match self {
-            Self::PseudoRange(freq) | Self::Power(freq) | Self::PhaseRange(freq) => match rhs {
-                Self::PseudoRange(rhs) | Self::Power(rhs) | Self::PhaseRange(rhs) => rhs == freq,
-                _ => false,
+            Self::PseudoRange(freq) | Self::Power(freq) | Self::UnambiguousPhaseRange(freq) => {
+                match rhs {
+                    Self::PseudoRange(rhs)
+                    | Self::Power(rhs)
+                    | Self::UnambiguousPhaseRange(rhs) => rhs == freq,
+                    _ => false,
+                }
             },
             _ => false,
         }
@@ -54,7 +66,7 @@ impl Observable {
     /// For example, both are phase observations.
     pub fn same_physics(&self, rhs: &Observable) -> bool {
         match self {
-            Self::PhaseRange(_) => matches!(rhs, Self::PhaseRange(_)),
+            Self::UnambiguousPhaseRange(_) => matches!(rhs, Self::UnambiguousPhaseRange(_)),
             Self::PseudoRange(_) => matches!(rhs, Self::PseudoRange(_)),
             Self::Power(_) => matches!(rhs, Self::Power(_)),
             Self::Pressure => matches!(rhs, Self::Pressure),
@@ -64,12 +76,12 @@ impl Observable {
         }
     }
 
-    /// Returns true if this a [Observable::PhaseRange] measurement
+    /// Returns true if this a [Observable::UnambiguousPhaseRange] measurement
     pub fn is_phase_range_observable(&self) -> bool {
-        matches!(self, Self::PhaseRange(_))
+        matches!(self, Self::UnambiguousPhaseRange(_))
     }
 
-    /// Returns true if this [Observable] is an [Observable::PhaseRange] measurement
+    /// Returns true if this [Observable] is an [Observable::UnambiguousPhaseRange] measurement
     pub fn is_pseudo_range_observable(&self) -> bool {
         matches!(self, Self::PseudoRange(_))
     }
@@ -87,7 +99,7 @@ impl std::fmt::Display for Observable {
             Self::HumidityRate => write!(f, "Moisture rate"),
             Self::FrequencyRatio => write!(f, "Frequency ratio"),
             Self::PseudoRange(freq) => write!(f, "C{}", freq),
-            Self::PhaseRange(freq) => write!(f, "L{}", freq),
+            Self::UnambiguousPhaseRange(freq) => write!(f, "L{}", freq),
             Self::Power(freq) => write!(f, "W{}", freq),
         }
     }
@@ -107,7 +119,7 @@ impl std::str::FromStr for Observable {
             _ => {
                 let frequency = Frequency::from_str(&content[1..])?;
                 if content.starts_with('L') {
-                    Ok(Self::PhaseRange(frequency))
+                    Ok(Self::UnambiguousPhaseRange(frequency))
                 } else if content.starts_with('C') {
                     Ok(Self::PseudoRange(frequency))
                 } else if content.starts_with('W') {
@@ -143,8 +155,16 @@ mod test {
     #[test]
     fn observable_parsing() {
         for (observable, expected, formatted) in [
-            ("L1", Observable::PhaseRange(Frequency::DORIS1), "L1"),
-            ("L2", Observable::PhaseRange(Frequency::DORIS2), "L2"),
+            (
+                "L1",
+                Observable::UnambiguousPhaseRange(Frequency::DORIS1),
+                "L1",
+            ),
+            (
+                "L2",
+                Observable::UnambiguousPhaseRange(Frequency::DORIS2),
+                "L2",
+            ),
             ("C1", Observable::PseudoRange(Frequency::DORIS1), "C1"),
             ("C2", Observable::PseudoRange(Frequency::DORIS2), "C2"),
             ("W1", Observable::Power(Frequency::DORIS1), "W1"),
@@ -161,8 +181,8 @@ mod test {
             assert_eq!(parsed.to_string(), formatted);
         }
 
-        let l1 = Observable::PhaseRange(Frequency::DORIS1);
-        let l2 = Observable::PhaseRange(Frequency::DORIS2);
+        let l1 = Observable::UnambiguousPhaseRange(Frequency::DORIS1);
+        let l2 = Observable::UnambiguousPhaseRange(Frequency::DORIS2);
         let c1 = Observable::PseudoRange(Frequency::DORIS1);
         let c2 = Observable::PseudoRange(Frequency::DORIS2);
 

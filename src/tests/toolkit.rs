@@ -46,7 +46,7 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
 
                     match test_measurement {
                         Measurement::ClockOffset(test_offset) => {
-                            assert_eq!(measurements.satellite_clock_offset, *test_offset);
+                            assert_eq!(measurements.satellite_clock_offset, Some(*test_offset));
                         },
                         Measurement::Observation((test_observable, test_value)) => {
                             // locate

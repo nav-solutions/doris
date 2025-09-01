@@ -38,8 +38,8 @@ fn v3_cs2rx18164() {
 
     // Measurements and physics to follow
     let observables = vec![
-        Observable::PhaseRange(Frequency::DORIS1), // phase, in meters of prop.
-        Observable::PhaseRange(Frequency::DORIS2),
+        Observable::UnambiguousPhaseRange(Frequency::DORIS1), // phase, in meters of prop.
+        Observable::UnambiguousPhaseRange(Frequency::DORIS2),
         Observable::PseudoRange(Frequency::DORIS1), // decoded pseudo range
         Observable::PseudoRange(Frequency::DORIS2),
         Observable::Power(Frequency::DORIS1), // received power

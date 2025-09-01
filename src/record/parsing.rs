@@ -100,28 +100,29 @@ impl Record {
                             }
                         }
                     } else {
-                        if nth == 1 {
-                            if line.starts_with("D") {
-                                // station identification
-                                let station_id = line[1..3]
-                                    .trim()
-                                    .parse::<u16>()
-                                    .map_err(|_| ParsingError::StationFormat)?;
+                        if line.starts_with("D") {
+                            // new station starting
+                            obs_ptr = 0;
 
-                                let matcher = Matcher::ID(station_id);
+                            // station identification
+                            let station_id = line[1..3]
+                                .trim()
+                                .parse::<u16>()
+                                .map_err(|_| ParsingError::StationFormat)?;
 
-                                // identification
-                                if let Some(matching) = header
-                                    .ground_stations
-                                    .iter()
-                                    .filter(|station| station.matches(&matcher))
-                                    .reduce(|k, _| k)
-                                {
-                                    station = Some(matching);
-                                } else {
-                                    #[cfg(feature = "logs")]
-                                    debug!("unidentified station: #{:02}", station_id);
-                                }
+                            let matcher = Matcher::ID(station_id);
+
+                            // identification
+                            if let Some(matching) = header
+                                .ground_stations
+                                .iter()
+                                .filter(|station| station.matches(&matcher))
+                                .reduce(|k, _| k)
+                            {
+                                station = Some(matching);
+                            } else {
+                                #[cfg(feature = "logs")]
+                                debug!("unidentified station: #{:02}", station_id);
                             }
                         }
 
@@ -138,9 +139,11 @@ impl Record {
                             let mut offset = 3;
 
                             loop {
+                                println!("obs_ptr={}", obs_ptr);
+
                                 if offset + OBSERVABLE_WIDTH + 1 < line_len {
                                     let slice = &line[offset..offset + OBSERVABLE_WIDTH];
-                                    // println!("slice \"{}\"", slice);
+                                    println!("slice \"{}\"", slice);
 
                                     match slice.trim().parse::<f64>() {
                                         Ok(value) => {
