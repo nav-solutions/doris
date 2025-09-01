@@ -73,7 +73,7 @@ impl Header {
             w,
             "{}",
             fmt_doris(
-                &format!("{:10}", self.ground_stations.len()),
+                &format!("{:6}", self.ground_stations.len()),
                 "# OF STATIONS"
             )
         )?;
