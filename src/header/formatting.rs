@@ -82,13 +82,7 @@ impl Header {
             writeln!(
                 w,
                 "{}",
-                fmt_doris(
-                    &format!(
-                        "D{:02}  {} {}                         {}  3   0",
-                        station.code, station.label, station.site, station.domes
-                    ),
-                    "STATION REFERENCE"
-                )
+                fmt_doris(&format!("{:x}", station), "STATION REFERENCE")
             )?;
         }
 

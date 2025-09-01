@@ -83,6 +83,8 @@ impl Record {
                         // parse date & time
                         epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
 
+                        println!("Epoch={}", epoch);
+
                         // parse clock offset, if any
                         let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
                             .trim()
