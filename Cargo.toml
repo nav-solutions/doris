@@ -33,7 +33,7 @@ num = "0.4"
 strum = "0.26"
 thiserror = "2"
 num-derive = "0.4"
-itertools = "0.13.0"
+itertools = "0.14.0"
 num-integer = "0.1.44" # TODO: see if we can get rid of .div_ceil()
 flate2 = { version = "1", optional = true }
 bitflags = { version = "2.3", features = ["serde"] } 
