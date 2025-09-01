@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use itertools::Itertools;
 use std::collections::HashMap;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ClockOffset {
     /// True if this [ClockOffset] is actually extrapolated

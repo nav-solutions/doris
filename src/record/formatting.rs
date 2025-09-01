@@ -1,7 +1,7 @@
 use crate::{
     epoch::format as format_epoch,
     error::FormattingError,
-    prelude::{Epoch, EpochFlag, Header, Key, Record},
+    prelude::{Epoch, EpochFlag, GroundStation, Header, Key, Record},
 };
 
 use std::io::{BufWriter, Write};
@@ -14,9 +14,31 @@ impl Record {
         writer: &mut BufWriter<W>,
         header: &Header,
     ) -> Result<(), FormattingError> {
+        let num_observables = header.observables.len();
+
         // browse in chronological order
         for (epoch, flag) in self.epochs_iter() {
-            write!(writer, "> {}00  {}  1", format_epoch(epoch), flag)?; // TODO: nb stations!
+            write!(writer, "> {}00  {}", format_epoch(epoch), flag)?;
+
+            // determine number of station at this epoch
+            let mut num_stations = 0;
+            let mut prev_code = 0;
+
+            for station in header.ground_stations.iter() {
+                let key = Key {
+                    epoch,
+                    flag,
+                    station: station.clone(),
+                };
+
+                if self.measurements.get(&key).is_some() {
+                    num_stations += 1;
+                }
+
+                prev_code = station.code;
+            }
+
+            write!(writer, "{:3}", num_stations)?;
 
             match flag {
                 EpochFlag::OK | EpochFlag::PowerFailure => {
@@ -62,8 +84,13 @@ impl Record {
                                     .reduce(|k, _| k)
                                 {
                                     write!(writer, "{:14.3}  ", observation.value)?;
-                                    if (nth_observable % 5) == 4 {
+
+                                    if nth_observable == num_observables - 1 {
                                         write!(writer, "\n")?;
+                                    } else {
+                                        if (nth_observable % 5) == 4 {
+                                            write!(writer, "\n")?;
+                                        }
                                     }
                                 }
                             }

@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 #[cfg(doc)]
 use crate::prelude::GroundStation;
 
-use crate::prelude::{Comments, Epoch, Observable};
+use crate::prelude::{Comments, Epoch, Matcher, Observable};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -38,14 +38,29 @@ pub struct Record {
 }
 
 impl Record {
-    /// Returns a unique list of [Observable]s, defining all physics
-    /// measured for this set of [GroundStation]s.
-    pub fn observables(&self) -> Box<dyn Iterator<Item = Observable> + '_> {
-        Box::new([].into_iter())
-    }
-
     /// Obtain a chronological ([Epoch], and [EpochFlag]) [Iterator]
     pub fn epochs_iter(&self) -> Box<dyn Iterator<Item = (Epoch, EpochFlag)> + '_> {
         Box::new(self.measurements.keys().map(|k| (k.epoch, k.flag)).unique())
+    }
+
+    /// Returns the list of [Observable]s for given station
+    pub fn station_observables_iter<'a>(
+        &'a self,
+        matcher: &'a Matcher<'a>,
+    ) -> Box<dyn Iterator<Item = Observable> + '_> {
+        Box::new(
+            self.measurements
+                .iter()
+                .flat_map(move |(k, v)| {
+                    v.observations.keys().filter_map(move |observable| {
+                        if k.station.matches(&matcher) {
+                            Some(*observable)
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .unique(),
+        )
     }
 }

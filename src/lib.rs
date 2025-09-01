@@ -58,7 +58,7 @@ use crate::{
     matcher::Matcher,
     observable::Observable,
     production::ProductionAttributes,
-    record::Record,
+    record::{ClockOffset, Record},
     station::GroundStation,
 };
 
@@ -286,6 +286,25 @@ impl DORIS {
             .filter(|station| station.matches(&matcher))
             .reduce(|k, _| k)
             .cloned()
+    }
+
+    /// Returns measurement satellite [ClockOffset] [Iterator] for all Epochs, in chronological order
+    pub fn satellite_clock_offset_iter(
+        &self,
+    ) -> Box<dyn Iterator<Item = (Epoch, ClockOffset)> + '_> {
+        Box::new(
+            self.record
+                .measurements
+                .iter()
+                .filter_map(|(k, v)| {
+                    if let Some(clock_offset) = v.satellite_clock_offset {
+                        Some((k.epoch, clock_offset))
+                    } else {
+                        None
+                    }
+                })
+                .unique(),
+        )
     }
 
     /// Studies actual measurement rate and returns the highest
