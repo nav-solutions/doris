@@ -49,13 +49,22 @@ impl ClockOffset {
 pub enum MeasurementFlag {
     /// Epoch is OK (sane)
     #[default]
-    Ok,
+    OK,
 
     /// Power failure since previous epoch
     PowerFailure,
 
-    /// Other special event / perturbation.
-    SpecialEvent,
+    /// Special event: antenna being moved since previous measurement
+    AntennaBeingMoved,
+
+    /// Special event: new site occupation (marks end of kinematic data)
+    NewSiteEndofKinematics,
+
+    /// Header information is to follow (not actual measurements)
+    HeaderDataFollowing,
+
+    /// External event (other)
+    ExternalEvent,
 }
 
 impl std::str::FromStr for MeasurementFlag {
@@ -63,10 +72,13 @@ impl std::str::FromStr for MeasurementFlag {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "0" => Ok(Self::Ok),
+            "0" => Ok(Self::OK),
             "1" => Ok(Self::PowerFailure),
-            "2" => Ok(Self::SpecialEvent),
-            _ => Err(ParsingError::EpochFlag),
+            "2" => Ok(Self::AntennaBeingMoved),
+            "3" => Ok(Self::NewSiteEndofKinematics),
+            "4" => Ok(Self::HeaderDataFollowing),
+            "5" => Ok(Self::ExternalEvent),
+            _ => Err(ParsingError::MeasurementFlag),
         }
     }
 }
@@ -74,9 +86,12 @@ impl std::str::FromStr for MeasurementFlag {
 impl std::fmt::Display for MeasurementFlag {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Ok => "0".fmt(f),
+            Self::OK => "0".fmt(f),
             Self::PowerFailure => "1".fmt(f),
-            Self::SpecialEvent => "2".fmt(f),
+            Self::AntennaBeingMoved => "2".fmt(f),
+            Self::NewSiteEndofKinematics => "3".fmt(f),
+            Self::HeaderDataFollowing => "4".fmt(f),
+            Self::ExternalEvent => "5".fmt(f),
         }
     }
 }
@@ -95,6 +110,13 @@ pub struct Measurements {
 }
 
 impl Measurements {
+    /// Returns true if this set of [Measurements] is marked with [MeasurementFlag::OK].
+    /// When this is not true, you should use the attached [MeasurementFlag] to inquire
+    /// the event, and likely issue.
+    pub fn is_ok(&self) -> bool {
+        self.flag == MeasurementFlag::OK
+    }
+
     /// Add a new observation to this set of [Measurements]  
     pub fn add_observation(&mut self, observable: Observable, observation: Observation) {
         self.observations.insert(observable, observation);

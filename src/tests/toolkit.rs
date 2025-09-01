@@ -46,7 +46,25 @@ pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
 
                     match test_measurement {
                         Measurement::ClockOffset(test_offset) => {
-                            assert_eq!(measurements.satellite_clock_offset, Some(*test_offset));
+                            let sat_offset =
+                                measurements.satellite_clock_offset.unwrap_or_else(|| {
+                                    panic!("Unreported satellite clock offset @ {:?}", key);
+                                });
+
+                            assert_eq!(
+                                sat_offset.extrapolated, test_offset.extrapolated,
+                                "incorrect clock offset interpretation"
+                            );
+
+                            let error = (sat_offset.offset.total_nanoseconds()
+                                - test_offset.offset.total_nanoseconds())
+                            .abs();
+                            assert!(
+                                error < 1,
+                                "erroenous clock offset reported @ {:?} (err={}ns)",
+                                key,
+                                error
+                            );
                         },
                         Measurement::Observation((test_observable, test_value)) => {
                             // locate

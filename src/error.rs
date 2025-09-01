@@ -18,8 +18,8 @@ pub enum ParsingError {
     #[error("file version parsing error")]
     Version,
 
-    #[error("failed to parse epoch flag")]
-    EpochFlag,
+    #[error("failed to parse measurement flag")]
+    MeasurementFlag,
 
     #[error("failed to parse phase observation flag")]
     ObservationFlag,

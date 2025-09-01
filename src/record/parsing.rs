@@ -4,7 +4,7 @@ use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
     prelude::{
-        Comments, Duration, Epoch, Flag, GroundStation, Header, Key, Matcher, Measurements,
+        ClockOffset, Comments, Duration, Epoch, GroundStation, Header, Key, Matcher, Measurements,
         Observation, Record, TimeScale, SNR,
     },
 };
@@ -73,6 +73,7 @@ impl Record {
                 let mut obs_ptr = 0;
                 let mut epoch = Epoch::default();
                 let mut station = Option::<&GroundStation>::None;
+                let mut clock_offset = Option::<ClockOffset>::None;
 
                 for (nth, line) in epoch_buf.lines().enumerate() {
                     let line_len = line.len();
@@ -89,14 +90,15 @@ impl Record {
                             .parse::<f64>()
                             .map_err(|_| ParsingError::ClockOffset)?;
 
-                        let clock_offset = Duration::from_seconds(*clock_offset_secs);
+                        let dt = Duration::from_seconds(*clock_offset_secs);
+                        clock_offset = Some(ClockOffset::from_measured_offset(dt));
 
-                        // extrapolated clock ?
-                        let mut clock_extrapolated = false;
-
+                        // clock extrapolation flag
                         if line_len > CLOCK_OFFSET + CLOCK_SIZE {
                             if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
-                                clock_extrapolated = true;
+                                if let Some(clock_offset) = &mut clock_offset {
+                                    clock_offset.extrapolated = true;
+                                }
                             }
                         }
                     } else {
@@ -162,6 +164,9 @@ impl Record {
                                                     observables[obs_ptr],
                                                     observation,
                                                 );
+
+                                                measurements.satellite_clock_offset = clock_offset;
+
                                                 record
                                                     .measurements
                                                     .insert(key.clone(), measurements);
@@ -199,18 +204,18 @@ impl Record {
                                     let slice = &line[offset..offset + 1];
                                     // println!("slice \"{}\"", slice);
 
-                                    if let Ok(flag) = slice.trim().parse::<Flag>() {
-                                        if let Some(measurements) =
-                                            record.measurements.get_mut(&key)
-                                        {
-                                            if let Some(observation) = measurements
-                                                .observations
-                                                .get_mut(&observables[obs_ptr])
-                                            {
-                                                observation.phase_flag = Some(flag);
-                                            }
-                                        }
-                                    }
+                                    // if let Ok(flag) = slice.trim().parse::<Flag>() {
+                                    //     if let Some(measurements) =
+                                    //         record.measurements.get_mut(&key)
+                                    //     {
+                                    //         if let Some(observation) = measurements
+                                    //             .observations
+                                    //             .get_mut(&observables[obs_ptr])
+                                    //         {
+                                    //             observation.phase_flag = Some(flag);
+                                    //         }
+                                    //     }
+                                    // }
                                 }
 
                                 offset += 1;

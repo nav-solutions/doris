@@ -6,10 +6,7 @@ use crate::prelude::Observable;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::ParsingError,
-    prelude::{Flag, SNR},
-};
+use crate::{error::ParsingError, prelude::SNR};
 
 /// Signal [Observation]
 #[derive(Copy, Default, Clone, Debug, PartialEq, PartialOrd)]
@@ -18,9 +15,8 @@ pub struct Observation {
     /// [SNR] for all frequency measurements
     pub snr: Option<SNR>,
 
-    /// Phase lock [Flag] for phase measurements specifically.
-    pub phase_flag: Option<Flag>,
-
+    // /// Phase lock [Flag] for phase measurements specifically.
+    // pub phase_flag: Option<Flag>,
     /// Measured value, unit is [Observable] dependent.
     pub value: f64,
 }
@@ -32,11 +28,11 @@ impl Observation {
         self
     }
 
-    /// Defines DORIS phase measurement with associated [Flag]
-    pub fn with_phase_flag(mut self, flag: Flag) -> Self {
-        self.phase_flag = Some(flag);
-        self
-    }
+    // /// Defines DORIS phase measurement with associated [Flag]
+    // pub fn with_phase_flag(mut self, flag: Flag) -> Self {
+    //     self.phase_flag = Some(flag);
+    //     self
+    // }
 
     /// Defines new DORIS measurement with desired value
     pub fn with_value(mut self, value: f64) -> Self {
