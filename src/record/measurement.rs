@@ -1,7 +1,10 @@
 #[cfg(doc)]
 use crate::prelude::{GroundStation, TimeScale, DORIS};
 
-use crate::prelude::{Duration, Observable, Observation};
+use crate::{
+    error::ParsingError,
+    prelude::{Duration, Observable, Observation},
+};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -39,10 +42,51 @@ impl ClockOffset {
     }
 }
 
+/// [MeasurementFlag] is attached to DORIS measurements,
+/// describing sampling conditions.
+#[derive(Copy, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum MeasurementFlag {
+    /// Epoch is OK (sane)
+    #[default]
+    Ok,
+
+    /// Power failure since previous epoch
+    PowerFailure,
+
+    /// Other special event / perturbation.
+    SpecialEvent,
+}
+
+impl std::str::FromStr for MeasurementFlag {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "0" => Ok(Self::Ok),
+            "1" => Ok(Self::PowerFailure),
+            "2" => Ok(Self::SpecialEvent),
+            _ => Err(ParsingError::EpochFlag),
+        }
+    }
+}
+
+impl std::fmt::Display for MeasurementFlag {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Ok => "0".fmt(f),
+            Self::PowerFailure => "1".fmt(f),
+            Self::SpecialEvent => "2".fmt(f),
+        }
+    }
+}
 /// [DORIS] Measurements (also referred to as "Observations") of a [GroundStation]
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Measurements {
+    /// Measurement flag, describing sampling conditions
+    pub flag: MeasurementFlag,
+
     /// Satellite (=measurement system) [ClockOffset].
     pub satellite_clock_offset: Option<ClockOffset>,
 
@@ -73,6 +117,13 @@ impl Measurements {
     pub fn with_satellite_clock_offset(&self, clock_offset: ClockOffset) -> Self {
         let mut s = self.clone();
         s.satellite_clock_offset = Some(clock_offset);
+        s
+    }
+
+    /// Copies and updates the [MeasurementFlag]
+    pub fn with_measurement_flag(&self, flag: MeasurementFlag) -> Self {
+        let mut s = self.clone();
+        s.flag = flag;
         s
     }
 }
