@@ -55,7 +55,7 @@ impl Record {
                             if let Some(clock_offset) = measurements.satellite_clock_offset {
                                 write!(
                                     writer,
-                                    "{:14.3} {}\n",
+                                    "{:13.3} {}\n",
                                     clock_offset.offset.to_seconds(),
                                     clock_offset.extrapolated as u8
                                 )?;
@@ -89,7 +89,7 @@ impl Record {
                                         write!(writer, "\n")?;
                                     } else {
                                         if (nth_observable % 5) == 4 {
-                                            write!(writer, "\n")?;
+                                            write!(writer, "\n   ")?;
                                         }
                                     }
                                 }

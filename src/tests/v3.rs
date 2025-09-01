@@ -157,7 +157,9 @@ fn v3_cs2rx18164() {
     doris.to_gzip_file("formatted.gz").unwrap();
 
     // // parse back
-    // let parsed = DORIS::from_gzip_file("formatted.gz").unwrap();
+    // let parsed = DORIS::from_gzip_file("formatted.gz").unwrap_or_else(|e| {
+    //     panic!("failed to parse 'formatted.gz' back: {}", e);
+    // });
 
     // testbench
     // assert_eq!(parsed, doris);

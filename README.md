@@ -28,6 +28,7 @@ her RINEX like formats have their own parser:
   - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
   - [IONEX (Ionosphere) Maps](https://github.com/nav-solutions/ionex)
 
+NB: file formatting is work in progress and should be soon validated.
 
 To contribute or join our community, you may:
 
@@ -39,7 +40,6 @@ To contribute or join our community, you may:
 
 - Fast
 - Seamless gzip compression support on `flate2` crate feature
-- File formatting
 
 ## Inconvenients
 
