@@ -5,7 +5,7 @@ use crate::{
     error::ParsingError,
     prelude::{
         ClockOffset, Comments, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher,
-        Measurements, Observation, Record, TimeScale, SNR,
+        Measurements, Observable, Observation, Record, TimeScale, SNR,
     },
 };
 
@@ -129,7 +129,7 @@ impl Record {
 
                         // station must be identified
                         if let Some(station) = station {
-                            println!("line={} station={:?}", nth, station);
+                            // println!("line={} station={:?}", nth, station);
 
                             // identified
                             let key = Key {
@@ -141,17 +141,21 @@ impl Record {
                             let mut offset = 3;
 
                             loop {
-                                println!("obs_ptr={}", obs_ptr);
+                                // println!("obs_ptr={}", obs_ptr);
 
                                 if offset + OBSERVABLE_WIDTH + 1 < line_len {
                                     let slice = &line[offset..offset + OBSERVABLE_WIDTH];
-                                    println!("slice \"{}\"", slice);
+                                    // println!("slice \"{}\"", slice);
 
                                     match slice.trim().parse::<f64>() {
-                                        Ok(value) => {
-                                            let mut observation =
-                                                Observation::default().with_value(value);
+                                        Ok(mut value) => {
+                                            let mut observation = Observation::default();
 
+                                            if observables[obs_ptr] == Observable::FrequencyRatio {
+                                                value *= 1.0E-11;
+                                            }
+
+                                            observation.value = value;
                                             if let Some(measurements) =
                                                 record.measurements.get_mut(&key)
                                             {
@@ -161,6 +165,7 @@ impl Record {
                                                 );
                                             } else {
                                                 let mut measurements = Measurements::default();
+
                                                 measurements.add_observation(
                                                     observables[obs_ptr],
                                                     observation,
