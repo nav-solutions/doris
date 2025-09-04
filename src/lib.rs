@@ -218,6 +218,22 @@ impl DORIS {
     /// Dumps [DORIS] into writable local file (as readable ASCII UTF-8)
     /// using efficient buffered formatting.
     /// This is the mirror operation of [Self::from_file].
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// doris.to_file("demo.txt")
+    ///     .unwrap();
+    ///
+    /// let parsed = DORIS::from_file("demo.txt")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    /// assert_eq!(parsed.header.ground_stations.len(), 53); // Network
+    /// ```
     pub fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), FormattingError> {
         let fd = File::create(path)?;
         let mut writer = BufWriter::new(fd);
@@ -314,6 +330,22 @@ impl DORIS {
     /// Dumps and gzip encodes [DORIS] into writable local file,
     /// using efficient buffered formatting.
     /// This is the mirror operation of [Self::from_gzip_file].
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// doris.to_gzip_file("demo.gz")
+    ///     .unwrap();
+    ///
+    /// let parsed = DORIS::from_gzip_file("demo.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    /// assert_eq!(parsed.header.ground_stations.len(), 53); // Network
+    /// ```
     #[cfg(feature = "flate2")]
     #[cfg_attr(docsrs, doc(cfg(feature = "flate2")))]
     pub fn to_gzip_file<P: AsRef<Path>>(&self, path: P) -> Result<(), FormattingError> {
@@ -516,23 +548,35 @@ impl DORIS {
     /// Copies and returns new [DORIS] that is the result
     /// of ground station observation differentiation.
     /// See [Self::observations_substract_mut] for more information.
-    pub fn substract(&self, rhs: &Self) -> Result<Self, Error> {
+    pub fn substract(&self, rhs: &Self) -> Self {
         let mut s = self.clone();
-        s.substract_mut(rhs)?;
-        Ok(s)
+        s.substract_mut(rhs);
+        s
     }
 
     /// Substract (in place) this [DORIS] file to another, creating
-    /// a "residual" [DORIS] file. All common and synchronous measurements
-    /// are substracted to one another, others are discarded and dropped
-    /// after this operation.
-    pub fn substract_mut(&mut self, rhs: &Self) -> Result<(), Error> {
-        let lhs_dt = self
-            .dominant_sampling_period()
-            .ok_or(Error::UndeterminedSamplingRate)?;
+    /// a "residual" [DORIS] file. All synchronous measurements of
+    /// matching stations are substracted to one another.
+    /// Satellite clock offset is preserved.
+    /// All other stations observations (non-synchronous, no remote counter part)
+    /// are dropped: you are left with residual content only after this operation.
+    pub fn substract_mut(&mut self, rhs: &Self) {
+        self.record.measurements.retain(|k, measurements| {
+            if let Some(rhs_measurements) = rhs.record.measurements.get(&k) {
+                measurements.observations.retain(|obs_k, observation| {
+                    if let Some(rhs_obs) = rhs_measurements.observations.get(&obs_k) {
+                        observation.value -= rhs_obs.value;
+                        true
+                    } else {
+                        false
+                    }
+                });
 
-        let half_lhs_dt = lhs_dt / 2.0;
-
+                !measurements.observations.is_empty()
+            } else {
+                false
+            }
+        });
         // if let Some(rhs) = rhs.record.as_obs() {
         //     if let Some(rec) = self.record.as_mut_obs() {
         //         rec.retain(|k, v| {
@@ -569,8 +613,6 @@ impl DORIS {
         //         });
         //     }
         // }
-
-        Ok(())
     }
 }
 

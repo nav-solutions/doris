@@ -42,28 +42,30 @@ impl Header {
 
         for line in reader.lines() {
             if line.is_err() {
+                // invalid file op
                 continue;
             }
 
             let line = line.unwrap();
 
             if line.len() < 60 {
-                continue; // --> invalid header content
+                // invalid content
+                continue;
             }
 
             let (content, marker) = line.split_at(60);
-
             let marker = marker.trim();
 
             if marker.eq("END OF HEADER") {
-                // Special marker: done parsing
+                // special marker: done parsing
                 break;
             }
-            if marker.trim().eq("COMMENT") {
+
+            if marker.eq("COMMENT") {
                 // Comments are stored as is.
                 comments.push(content.trim().to_string());
                 continue;
-            } else if marker.contains("RINEX VERSION / TYPE") {
+            } else if marker.eq("RINEX VERSION / TYPE") {
                 let (vers, rem) = line.split_at(20);
                 let (type_str, rem) = rem.split_at(20);
                 let (constell_str, _) = rem.split_at(20);
@@ -82,7 +84,7 @@ impl Header {
 
                 // version string
                 version = Version::from_str(vers).or(Err(ParsingError::Version))?;
-            } else if marker.contains("PGM / RUN BY / DATE") {
+            } else if marker.eq("PGM / RUN BY / DATE") {
                 let (pgm, rem) = line.split_at(20);
                 let pgm = pgm.trim();
                 if pgm.len() > 0 {
@@ -100,10 +102,10 @@ impl Header {
                 if date_str.len() > 0 {
                     date = Some(date_str.to_string());
                 }
-            } else if marker.contains("SATELLITE NAME") {
+            } else if marker.eq("SATELLITE NAME") {
                 let name = content.split_at(20).0.trim();
                 satellite = name.to_string();
-            } else if marker.contains("OBSERVER / AGENCY") {
+            } else if marker.eq("OBSERVER / AGENCY") {
                 let (obs, ag) = content.split_at(20);
                 let obs = obs.trim();
                 let ag = ag.trim();
@@ -115,11 +117,11 @@ impl Header {
                 if ag.len() > 0 {
                     agency = Some(ag.to_string());
                 }
-            } else if marker.contains("REC # / TYPE / VERS") {
+            } else if marker.eq("REC # / TYPE / VERS") {
                 if let Ok(rx) = Receiver::from_str(content) {
                     receiver = Some(rx);
                 }
-            } else if marker.contains("SYS / SCALE FACTOR") {
+            } else if marker.eq("SYS / SCALE FACTOR") {
                 // // Parse scaling factor
                 // let (factor, rem) = rem.split_at(6);
                 // let factor = factor.trim();
@@ -139,12 +141,12 @@ impl Header {
                 //         observation.with_scaling(constell, observable, scaling);
                 //     }
                 // }
-            } else if marker.contains("LICENSE OF USE") {
+            } else if marker.eq("LICENSE OF USE") {
                 let lic = content.split_at(40).0.trim();
                 if lic.len() > 0 {
                     license = Some(lic.to_string());
                 }
-            } else if marker.contains("ANT # / TYPE") {
+            } else if marker.eq("ANT # / TYPE") {
                 let (sn, rem) = content.split_at(20);
                 let (model, _) = rem.split_at(20);
 
@@ -153,12 +155,12 @@ impl Header {
                         .with_model(model.trim())
                         .with_serial_number(sn.trim()),
                 );
-            } else if marker.contains("# OF STATIONS") {
-            } else if marker.contains("TIME OF FIRST OBS") {
+            } else if marker.eq("# OF STATIONS") {
+            } else if marker.eq("TIME OF FIRST OBS") {
                 time_of_first_observation = Some(Self::parse_time_of_obs(content)?);
-            } else if marker.contains("TIME OF LAST OBS") {
+            } else if marker.eq("TIME OF LAST OBS") {
                 time_of_last_observation = Some(Self::parse_time_of_obs(content)?);
-            } else if marker.contains("SYS / # / OBS TYPES") {
+            } else if marker.eq("SYS / # / OBS TYPES") {
                 if observables_continuation {
                     for item in content.split_ascii_whitespace() {
                         if let Ok(observable) = Observable::from_str(item) {
@@ -169,9 +171,9 @@ impl Header {
                     Self::parse_observables(content, &mut observables);
                     observables_continuation = true;
                 }
-            } else if marker.contains("COSPAR NUMBER") {
+            } else if marker.eq("COSPAR NUMBER") {
                 cospar = Some(COSPAR::from_str(content.trim())?);
-            } else if marker.contains("L2 / L1 DATE OFFSET") {
+            } else if marker.eq("L2 / L1 DATE OFFSET") {
                 // DORIS special case
                 let content = content[1..].trim();
 
@@ -180,7 +182,7 @@ impl Header {
                     .or(Err(ParsingError::DorisL1L2DateOffset))?;
 
                 l1_l2_date_offset = Duration::from_microseconds(time_offset_us);
-            } else if marker.contains("STATION REFERENCE") {
+            } else if marker.eq("STATION REFERENCE") {
                 // DORIS special case
                 let station = GroundStation::from_str(content.trim())?;
                 ground_stations.push(station);

@@ -92,11 +92,12 @@ impl Header {
 
     /// Formats "PGM / RUN BY / DATE"
     fn format_prog_runby<W: Write>(&self, w: &mut BufWriter<W>) -> Result<(), FormattingError> {
-        let mut string = if let Some(program) = &self.program {
-            format!("{:<20}", program)
-        } else {
-            "                    ".to_string()
-        };
+        let program = format!(
+            "doris-rs v{}",
+            Self::format_pkg_version(env!("CARGO_PKG_VERSION"))
+        );
+
+        let mut string = format!("{:<20}", program);
 
         if let Some(runby) = &self.run_by {
             let formatted = format!("{:<20}", runby);
