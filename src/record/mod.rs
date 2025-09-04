@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 pub use clock::ClockOffset;
 pub use flag::EpochFlag;
 pub use key::Key;
-pub use measurement::Measurements;
+pub use measurement::{Measurements, ObservationKey};
 pub use observation::Observation;
 pub use snr::SNR;
 
@@ -51,10 +51,10 @@ impl Record {
         Box::new(
             self.measurements
                 .iter()
-                .flat_map(move |(k, v)| {
-                    v.observations.keys().filter_map(move |observable| {
+                .flat_map(move |(_, measurements)| {
+                    measurements.observations.iter().filter_map(move |(k, _)| {
                         if k.station.matches(&matcher) {
-                            Some(*observable)
+                            Some(k.observable)
                         } else {
                             None
                         }

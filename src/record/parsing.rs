@@ -4,13 +4,13 @@ use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
     prelude::{
-        ClockOffset, Comments, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher,
-        Measurements, Observation, Record, TimeScale, SNR,
+        ClockOffset, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher, Measurements,
+        Observable, Observation, Record, TimeScale, SNR,
     },
 };
 
-// #[cfg(feature = "log")]
-// use log::{error, debug};
+#[cfg(feature = "log")]
+use log::{debug, error};
 
 impl Record {
     /// Parses the DORIS [Record] content by consuming the [Reader] until the end of stream.
@@ -36,9 +36,6 @@ impl Record {
         let mut epoch_buf = String::with_capacity(1024);
 
         let mut record = Record::default();
-
-        let mut obs_ptr = 0;
-        let mut line_offset = 0;
 
         let observables = &header.observables;
         let nb_observables = observables.len();
@@ -72,7 +69,7 @@ impl Record {
 
                 let mut obs_ptr = 0;
                 let mut epoch = Epoch::default();
-                let mut flag = EpochFlag::default();
+                let flag = EpochFlag::default();
                 let mut station = Option::<&GroundStation>::None;
                 let mut clock_offset = Option::<ClockOffset>::None;
 
@@ -81,24 +78,33 @@ impl Record {
 
                     if nth == 0 {
                         // parse date & time
+                        if line_len < MIN_EPOCH_SIZE {
+                            continue;
+                        }
+
                         epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
 
+                        let mut measurement = Measurements::default();
+
                         // parse clock offset, if any
-                        let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
-                            .trim()
-                            .parse::<f64>()
-                            .map_err(|_| ParsingError::ClockOffset)?;
+                        if line_len >= CLOCK_OFFSET + CLOCK_SIZE {
+                            let clock_offset_secs = &line[CLOCK_OFFSET..CLOCK_OFFSET + CLOCK_SIZE]
+                                .trim()
+                                .parse::<f64>()
+                                .map_err(|_| ParsingError::ClockOffset)?;
 
-                        let dt = Duration::from_seconds(*clock_offset_secs);
-                        clock_offset = Some(ClockOffset::from_measured_offset(dt));
+                            let dt = Duration::from_seconds(*clock_offset_secs);
+                            clock_offset = Some(ClockOffset::from_measured_offset(dt));
 
-                        // clock extrapolation flag
-                        if line_len > CLOCK_OFFSET + CLOCK_SIZE {
-                            if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
-                                if let Some(clock_offset) = &mut clock_offset {
-                                    clock_offset.extrapolated = true;
+                            // clock extrapolation flag
+                            if line_len > CLOCK_OFFSET + CLOCK_SIZE {
+                                if line[CLOCK_OFFSET + CLOCK_SIZE..].trim().eq("1") {
+                                    if let Some(clock_offset) = &mut clock_offset {
+                                        clock_offset.extrapolated = true;
+                                    }
                                 }
                             }
+                            measurement.satellite_clock_offset = clock_offset;
                         }
                     } else {
                         if line.starts_with("D") {
@@ -122,46 +128,44 @@ impl Record {
                             {
                                 station = Some(matching);
                             } else {
-                                #[cfg(feature = "logs")]
+                                #[cfg(feature = "log")]
                                 debug!("unidentified station: #{:02}", station_id);
                             }
                         }
 
                         // station must be identified
                         if let Some(station) = station {
-                            println!("line={} station={:?}", nth, station);
-
                             // identified
-                            let key = Key {
-                                epoch,
-                                flag,
-                                station: station.clone(),
-                            };
+                            let key = Key { epoch, flag };
 
                             let mut offset = 3;
 
                             loop {
-                                println!("obs_ptr={}", obs_ptr);
-
                                 if offset + OBSERVABLE_WIDTH + 1 < line_len {
                                     let slice = &line[offset..offset + OBSERVABLE_WIDTH];
-                                    println!("slice \"{}\"", slice);
 
                                     match slice.trim().parse::<f64>() {
-                                        Ok(value) => {
-                                            let mut observation =
-                                                Observation::default().with_value(value);
+                                        Ok(mut value) => {
+                                            let mut observation = Observation::default();
 
+                                            if observables[obs_ptr] == Observable::FrequencyRatio {
+                                                value *= 1.0E-11;
+                                            }
+
+                                            observation.value = value;
                                             if let Some(measurements) =
                                                 record.measurements.get_mut(&key)
                                             {
                                                 measurements.add_observation(
+                                                    station.clone(),
                                                     observables[obs_ptr],
                                                     observation,
                                                 );
                                             } else {
                                                 let mut measurements = Measurements::default();
+
                                                 measurements.add_observation(
+                                                    station.clone(),
                                                     observables[obs_ptr],
                                                     observation,
                                                 );
@@ -173,9 +177,12 @@ impl Record {
                                                     .insert(key.clone(), measurements);
                                             }
                                         },
+                                        #[cfg(feature = "log")]
                                         Err(e) => {
-                                            println!("observation parsing error: {}", e);
+                                            error!("observation parsing error: {}", e);
                                         },
+                                        #[cfg(not(feature = "log"))]
+                                        Err(_) => {},
                                     }
                                 }
 
@@ -189,12 +196,12 @@ impl Record {
                                         if let Some(measurements) =
                                             record.measurements.get_mut(&key)
                                         {
-                                            if let Some(observation) = measurements
-                                                .observations
-                                                .get_mut(&observables[obs_ptr])
-                                            {
-                                                observation.snr = Some(snr);
-                                            }
+                                            // if let Some(observation) = measurements
+                                            //     .observations
+                                            //     .get_mut(&observables[obs_ptr])
+                                            // {
+                                            //     observation.snr = Some(snr);
+                                            // }
                                         }
                                     }
                                 }
@@ -202,7 +209,7 @@ impl Record {
                                 offset += 1;
 
                                 if offset + 1 < line_len {
-                                    let slice = &line[offset..offset + 1];
+                                    // let slice = &line[offset..offset + 1];
                                     // println!("slice \"{}\"", slice);
 
                                     // if let Ok(flag) = slice.trim().parse::<Flag>() {
@@ -234,7 +241,7 @@ impl Record {
                         }
                     }
                 } // epoch parsing
-            } // buf_len
+            } // new epoch
 
             // clear on new epoch detection
             if new_epoch {
@@ -244,7 +251,8 @@ impl Record {
 
             // always stack new content
             epoch_buf.push_str(&line_buf);
-            buf_len += line_len;
+            buf_len += size;
+
             line_buf.clear(); // always clear newline buf
 
             if eos {

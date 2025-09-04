@@ -1,12 +1,10 @@
-use std::str::FromStr;
-
 #[cfg(doc)]
 use crate::prelude::Observable;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{error::ParsingError, prelude::SNR};
+use crate::prelude::SNR;
 
 /// Signal [Observation].
 #[derive(Copy, Default, Clone, Debug, PartialEq, PartialOrd)]
@@ -44,7 +42,7 @@ impl Observation {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn default_flag() {

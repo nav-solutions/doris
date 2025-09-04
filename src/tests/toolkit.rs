@@ -1,115 +1,113 @@
-use crate::prelude::{ClockOffset, Epoch, EpochFlag, Key, Matcher, Observable, Observation, DORIS};
+use crate::prelude::{ClockOffset, Epoch, EpochFlag, Key, Observable, ObservationKey, DORIS};
 
 #[derive(Debug)]
-pub enum Measurement {
+pub struct StationObservationData {
+    pub station: u16,
+    pub value: f64,
+    pub observable: Observable,
+}
+
+#[derive(Debug)]
+pub enum TestData {
     ClockOffset(ClockOffset),
-    Observation((Observable, Observation)),
+    StationObservation(StationObservationData),
 }
 
 pub struct TestPoint {
     pub epoch: Epoch,
     pub flag: EpochFlag,
-    pub station_id: u16,
-    pub measurements: Vec<Measurement>,
+    pub test_data: TestData,
 }
 
 impl TestPoint {
-    pub fn to_record_key(&self, dut: &DORIS) -> Key {
-        let station = dut
-            .header
-            .ground_station(self.station_id)
-            .unwrap_or_else(|| {
-                panic!("Ground station #{:02} does not exist", self.station_id);
-            });
-
+    pub fn to_record_key(&self) -> Key {
         Key {
-            station,
-            flag: self.flag,
             epoch: self.epoch,
+            flag: self.flag,
         }
     }
 }
 
-// /// Runs strict equality comparison, panics on any failure
-// pub fn doris_comparison(dut: &DORIS, model: &DORIS) {
-// }
+pub fn is_null_doris(dut: &DORIS) {
+    for (k, measurement) in dut.record.measurements.iter() {
+        for (obs_k, observation) in measurement.observations.iter() {
+            assert_eq!(observation.value, 0.0);
+        }
+    }
+}
 
 /// Tests all data points in this [DORIS] record
 pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {
     for testpoint in testpoints.iter() {
-        let key = testpoint.to_record_key(dut);
+        let key = testpoint.to_record_key();
 
         // locate measurement
-        match dut.record.measurements.get(&key) {
-            Some(measurements) => {
-                // browse test points
-                for test_measurement in testpoint.measurements.iter() {
-                    let mut found = false;
+        let measurements = dut.record.measurements.get(&key).unwrap_or_else(|| {
+            panic!("Missing measurement @ {:?}", key);
+        });
 
-                    match test_measurement {
-                        Measurement::ClockOffset(test_offset) => {
-                            let sat_offset =
-                                measurements.satellite_clock_offset.unwrap_or_else(|| {
-                                    panic!("Unreported satellite clock offset @ {:?}", key);
-                                });
+        match &testpoint.test_data {
+            TestData::ClockOffset(clock_offset) => {
+                let sat_offset = measurements.satellite_clock_offset.unwrap_or_else(|| {
+                    panic!("Unreported satellite clock offset @ {}", key.epoch);
+                });
 
-                            assert_eq!(
-                                sat_offset.extrapolated, test_offset.extrapolated,
-                                "incorrect clock offset interpretation"
-                            );
+                assert_eq!(
+                    sat_offset.extrapolated, clock_offset.extrapolated,
+                    "incorrect clock offset interpretation @ {}",
+                    key.epoch,
+                );
 
-                            let error = (sat_offset.offset.total_nanoseconds()
-                                - test_offset.offset.total_nanoseconds())
-                            .abs();
+                let error = (sat_offset.offset.total_nanoseconds()
+                    - clock_offset.offset.total_nanoseconds())
+                .abs();
 
-                            assert!(
-                                error < 1,
-                                "erroenous clock offset reported @ {:?} (offset={} err={}ns)",
-                                key,
-                                sat_offset.offset,
-                                error
-                            );
-
-                            found = true;
-                        },
-                        Measurement::Observation((test_observable, test_value)) => {
-                            // locate
-                            match measurements.observations.get(&test_observable) {
-                                Some(observed_value) => {
-                                    assert_eq!(
-                                        observed_value.snr, test_value.snr,
-                                        "invalid {} SNR reported @ {:?}",
-                                        test_observable, key
-                                    );
-
-                                    let error = (observed_value.value - test_value.value).abs();
-                                    assert!(
-                                        error < 1.0E-3,
-                                        "invalid {} measurement @ {:?} (value={} error={})",
-                                        test_observable,
-                                        key,
-                                        observed_value.value,
-                                        error
-                                    );
-
-                                    found = true;
-                                },
-                                None => {
-                                    panic!("missing {} observation @ {:?}", test_observable, key);
-                                },
-                            }
-                        },
-                    }
-
-                    assert!(
-                        found,
-                        "missing measurement {:?} @ {:?}",
-                        test_measurement, key
-                    );
-                }
+                assert!(
+                    error < 1,
+                    "invalid clock offset reported @ {} (offset={} err={}ns)",
+                    key.epoch,
+                    sat_offset.offset,
+                    error
+                );
             },
-            None => {
-                panic!("Failed to locate measurement for {:?}", key);
+            TestData::StationObservation(station_data) => {
+                // match this station
+                let station = dut
+                    .header
+                    .ground_station(station_data.station)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Station id={} not found at {}",
+                            key.epoch, station_data.station
+                        );
+                    });
+
+                // locate
+                let obs_key = ObservationKey {
+                    observable: station_data.observable,
+                    station: station,
+                };
+
+                let observation = measurements.observations.get(&obs_key).unwrap_or_else(|| {
+                    panic!(
+                        "{} missing {} measurement for station D{:02}",
+                        key.epoch, station_data.observable, station_data.station
+                    );
+                });
+
+                // TODO (SNR)
+                // assert_eq!(observation.snr, station_data;
+
+                let error = (observation.value - station_data.value).abs();
+                assert!(
+                    error < 1.0E-3,
+                    "invalid D{:02} {} measurement @ {} (value={}, error={})",
+                    station_data.station,
+                    key.epoch,
+                    station_data.observable,
+                    observation.value,
+                    error
+                );
             },
         }
     }

@@ -53,10 +53,9 @@ use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 use hifitime::prelude::{Duration, Epoch};
 
 use crate::{
-    error::{Error, FormattingError, ParsingError},
+    error::{FormattingError, ParsingError},
     header::Header,
     matcher::Matcher,
-    observable::Observable,
     production::ProductionAttributes,
     record::{ClockOffset, Record},
     station::GroundStation,
@@ -74,7 +73,9 @@ pub mod prelude {
         matcher::Matcher,
         observable::Observable,
         production::ProductionAttributes,
-        record::{ClockOffset, EpochFlag, Key, Measurements, Observation, Record, SNR},
+        record::{
+            ClockOffset, EpochFlag, Key, Measurements, Observation, ObservationKey, Record, SNR,
+        },
         station::GroundStation,
         Comments, DORIS,
     };
@@ -110,6 +111,59 @@ pub(crate) fn fmt_comment(content: &str) -> String {
 #[derive(Clone, Default, Debug, PartialEq)]
 /// [DORIS] is composed of a [Header] and a [Record] section.
 /// ```
+/// use std::str::FromStr;
+/// use doris_rs::prelude::*;
+///
+/// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+///     .unwrap();
+///
+/// assert_eq!(doris.header.satellite, "CRYOSAT-2");
+///
+/// let agency = "CNES".to_string(); // Agency / producer
+/// let program = "Expert".to_string(); // Software name
+/// let run_by = "CNES".to_string(); // Operator
+/// let date = "20180614 090016 UTC".to_string(); // Date of production
+/// let observer = "SPA_BN1_4.7P1".to_string(); // Operator
+///
+/// assert_eq!(doris.header.program, Some(program));
+/// assert_eq!(doris.header.run_by, Some(run_by));
+/// assert_eq!(doris.header.date, Some(date)); // currently not interpreted
+/// assert_eq!(doris.header.observer, Some(observer));
+/// assert_eq!(doris.header.agency, Some(agency));
+///
+/// assert!(doris.header.doi.is_none());
+/// assert!(doris.header.license.is_none());
+///
+/// let observables = vec![
+///    Observable::UnambiguousPhaseRange(Frequency::DORIS1), // phase, in meters of prop.
+///    Observable::UnambiguousPhaseRange(Frequency::DORIS2),
+///    Observable::PseudoRange(Frequency::DORIS1), // decoded pseudo range
+///    Observable::PseudoRange(Frequency::DORIS2),
+///    Observable::Power(Frequency::DORIS1), // received power
+///    Observable::Power(Frequency::DORIS2), // received power
+///    Observable::FrequencyRatio,           // f1/f2 ratio (=drift image)
+///    Observable::Pressure,                 // pressure, at ground station level (hPa)
+///    Observable::Temperature,              // temperature, at ground station level (°C)
+///    Observable::HumidityRate,             // saturation rate, at ground station level (%)
+/// ];
+///
+/// assert_eq!(doris.header.observables, observables);
+///
+/// assert_eq!(doris.header.ground_stations.len(), 53); // network
+///
+/// // Stations helper
+/// let site_matcher = Matcher::Site("TOULOUSE");
+///
+/// let toulouse = GroundStation::default()
+///     .with_domes(DOMES::from_str("10003S005").unwrap())
+///     .with_site_name("TOULOUSE") // site name
+///     .with_site_label("TLSB")    // site label/mnemonic
+///     .with_unique_id(13)         // file dependent
+///     .with_frequency_shift(0)    // f1/f2 site shift for this day
+///     .with_beacon_revision(3);   // DORIS 3rd generation
+///
+/// // helper
+/// assert_eq!(doris.ground_station(site_matcher), Some(toulouse));
 /// ```
 pub struct DORIS {
     /// [Header] gives general information
@@ -195,20 +249,20 @@ impl DORIS {
             Some(filename) => {
                 let filename = filename.to_string_lossy().to_string();
                 if let Ok(prod) = ProductionAttributes::from_str(&filename) {
-                    prod
+                    Some(prod)
                 } else {
-                    ProductionAttributes::default()
+                    None
                 }
             },
-            _ => ProductionAttributes::default(),
+            _ => None,
         };
 
-        let fd = File::open(path).expect("from_file: open error");
+        let fd = File::open(path)?;
 
         let mut reader = BufReader::new(fd);
         let mut doris = Self::parse(&mut reader)?;
 
-        doris.production = Some(file_attributes);
+        doris.production = file_attributes;
 
         Ok(doris)
     }
@@ -216,6 +270,22 @@ impl DORIS {
     /// Dumps [DORIS] into writable local file (as readable ASCII UTF-8)
     /// using efficient buffered formatting.
     /// This is the mirror operation of [Self::from_file].
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// doris.to_file("demo.txt")
+    ///     .unwrap();
+    ///
+    /// let parsed = DORIS::from_file("demo.txt")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    /// assert_eq!(parsed.header.ground_stations.len(), 53); // Network
+    /// ```
     pub fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), FormattingError> {
         let fd = File::create(path)?;
         let mut writer = BufWriter::new(fd);
@@ -224,6 +294,62 @@ impl DORIS {
     }
 
     /// Parses [DORIS] from local gzip compressed file.
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.header.satellite, "CRYOSAT-2");
+    ///
+    /// let agency = "CNES".to_string(); // Agency / producer
+    /// let program = "Expert".to_string(); // Software name
+    /// let run_by = "CNES".to_string(); // Operator
+    /// let date = "20180614 090016 UTC".to_string(); // Date of production
+    /// let observer = "SPA_BN1_4.7P1".to_string(); // Operator
+    ///
+    /// assert_eq!(doris.header.program, Some(program));
+    /// assert_eq!(doris.header.run_by, Some(run_by));
+    /// assert_eq!(doris.header.date, Some(date)); // currently not interpreted
+    /// assert_eq!(doris.header.observer, Some(observer));
+    /// assert_eq!(doris.header.agency, Some(agency));
+    ///
+    /// assert!(doris.header.doi.is_none());
+    /// assert!(doris.header.license.is_none());
+    ///
+    /// let observables = vec![
+    ///    Observable::UnambiguousPhaseRange(Frequency::DORIS1), // phase, in meters of prop.
+    ///    Observable::UnambiguousPhaseRange(Frequency::DORIS2),
+    ///    Observable::PseudoRange(Frequency::DORIS1), // decoded pseudo range
+    ///    Observable::PseudoRange(Frequency::DORIS2),
+    ///    Observable::Power(Frequency::DORIS1), // received power
+    ///    Observable::Power(Frequency::DORIS2), // received power
+    ///    Observable::FrequencyRatio,           // f1/f2 ratio (=drift image)
+    ///    Observable::Pressure,                 // pressure, at ground station level (hPa)
+    ///    Observable::Temperature,              // temperature, at ground station level (°C)
+    ///    Observable::HumidityRate,             // saturation rate, at ground station level (%)
+    /// ];
+    ///
+    /// assert_eq!(doris.header.observables, observables);
+    ///
+    /// assert_eq!(doris.header.ground_stations.len(), 53); // network
+    ///
+    /// // Stations helper
+    /// let site_matcher = Matcher::Site("TOULOUSE");
+    ///
+    /// let toulouse = GroundStation::default()
+    ///     .with_domes(DOMES::from_str("10003S005").unwrap())
+    ///     .with_site_name("TOULOUSE") // site name
+    ///     .with_site_label("TLSB")    // site label/mnemonic
+    ///     .with_unique_id(13)         // file dependent
+    ///     .with_frequency_shift(0)    // f1/f2 site shift for this day
+    ///     .with_beacon_revision(3);   // DORIS 3rd generation
+    ///
+    /// // helper
+    /// assert_eq!(doris.ground_station(site_matcher), Some(toulouse));
+    /// ```
     #[cfg(feature = "flate2")]
     #[cfg_attr(docsrs, doc(cfg(feature = "flate2")))]
     pub fn from_gzip_file<P: AsRef<Path>>(path: P) -> Result<DORIS, ParsingError> {
@@ -234,21 +360,21 @@ impl DORIS {
             Some(filename) => {
                 let filename = filename.to_string_lossy().to_string();
                 if let Ok(prod) = ProductionAttributes::from_str(&filename) {
-                    prod
+                    Some(prod)
                 } else {
-                    ProductionAttributes::default()
+                    None
                 }
             },
-            _ => ProductionAttributes::default(),
+            _ => None,
         };
 
-        let fd = File::open(path).expect("from_file: open error");
+        let fd = File::open(path)?;
 
         let reader = GzDecoder::new(fd);
         let mut reader = BufReader::new(reader);
         let mut doris = Self::parse(&mut reader)?;
 
-        doris.production = Some(file_attributes);
+        doris.production = file_attributes;
 
         Ok(doris)
     }
@@ -256,6 +382,22 @@ impl DORIS {
     /// Dumps and gzip encodes [DORIS] into writable local file,
     /// using efficient buffered formatting.
     /// This is the mirror operation of [Self::from_gzip_file].
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// doris.to_gzip_file("demo.gz")
+    ///     .unwrap();
+    ///
+    /// let parsed = DORIS::from_gzip_file("demo.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    /// assert_eq!(parsed.header.ground_stations.len(), 53); // Network
+    /// ```
     #[cfg(feature = "flate2")]
     #[cfg_attr(docsrs, doc(cfg(feature = "flate2")))]
     pub fn to_gzip_file<P: AsRef<Path>>(&self, path: P) -> Result<(), FormattingError> {
@@ -269,12 +411,12 @@ impl DORIS {
     /// Determines whether this structure results of combining several structures
     /// into a single one. This is determined by the presence of a custom yet somewhat standardized Header comment.
     pub fn is_merged(&self) -> bool {
-        let special_comment = String::from("FILE MERGE");
         for comment in self.header.comments.iter() {
             if comment.eq("FILE MERGE") {
                 return true;
             }
         }
+
         false
     }
 
@@ -289,6 +431,26 @@ impl DORIS {
     }
 
     /// Returns measurement satellite [ClockOffset] [Iterator] for all Epochs, in chronological order
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.header.satellite, "CRYOSAT-2");
+    ///
+    /// for (i, (epoch, clock_offset)) in doris.satellite_clock_offset_iter().enumerate() {
+    ///
+    ///     assert_eq!(clock_offset.extrapolated, false); // actual measurement
+    ///
+    ///     if i == 0 {
+    ///         assert_eq!(clock_offset.offset.to_seconds(), -4.326631626);
+    ///     } else if i == 10 {
+    ///         assert_eq!(clock_offset.offset.to_seconds(), -4.326631711);
+    ///     }
+    /// }
+    /// ```
     pub fn satellite_clock_offset_iter(
         &self,
     ) -> Box<dyn Iterator<Item = (Epoch, ClockOffset)> + '_> {
@@ -307,29 +469,170 @@ impl DORIS {
         )
     }
 
+    /// Returns histogram analysis of the sampling period, as ([Duration], population [usize]) tuple.
+    /// ```
+    /// use doris_rs::prelude::*;
+    /// use itertools::Itertools;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // requires more than 2 measurements
+    /// let (sampling_period, population) = doris.sampling_histogram()
+    ///     .sorted()
+    ///     .nth(0) // dominant
+    ///     .unwrap();
+    ///
+    /// assert_eq!(sampling_period, Duration::from_seconds(3.0));
+    /// ```
+    pub fn sampling_histogram(&self) -> Box<dyn Iterator<Item = (Duration, usize)> + '_> {
+        Box::new(
+            self.record
+                .epochs_iter()
+                .zip(self.record.epochs_iter().skip(1))
+                .map(|((ek_1, _), (ek_2, _))| ek_2 - ek_1)
+                .fold(vec![], |mut list, dt| {
+                    let mut found = false;
+
+                    for (delta, pop) in list.iter_mut() {
+                        if *delta == dt {
+                            *pop += 1;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if !found {
+                        list.push((dt, 1));
+                    }
+
+                    list
+                })
+                .into_iter(),
+        )
+    }
+
     /// Studies actual measurement rate and returns the highest
     /// value in the histogram as the dominant sampling rate
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    /// use itertools::Itertools;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // requires more than 2 measurements
+    /// let sampling_period = doris.dominant_sampling_period()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(sampling_period, Duration::from_seconds(3.0));
+    /// ```
     pub fn dominant_sampling_period(&self) -> Option<Duration> {
-        None // TODO
+        self.sampling_histogram()
+            .sorted()
+            .map(|(dt, _)| dt)
+            .reduce(|k, _| k)
+    }
+
+    /// Generates (guesses) a standardized (uppercase) filename from this actual [DORIS] data set.
+    /// This is particularly useful when initiated from a file that did not follow
+    /// standard naming conventions.
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// // parse standard file
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.standard_filename(), "CS2RX18164.gz");
+    ///
+    /// // Dump using random name
+    /// doris.to_file("example.txt")
+    ///     .unwrap();
+    ///
+    /// // parse back & use
+    /// let parsed = DORIS::from_file("example.txt")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    ///
+    /// // when coming from non standard names,
+    /// // all fields are deduced from actual content.
+    /// assert_eq!(parsed.standard_filename(), "CRYOS18164");
+    /// ```
+    pub fn standard_filename(&self) -> String {
+        if let Some(attributes) = &self.production {
+            attributes.to_string()
+        } else {
+            let mut doy = 0;
+            let mut year = 0i32;
+
+            let sat_len = self.header.satellite.len();
+            let mut sat_name = self.header.satellite[..std::cmp::min(sat_len, 5)].to_string();
+
+            if let Some(epoch) = self.header.time_of_first_observation {
+                year = epoch.year() - 2000;
+                doy = epoch.day_of_year().round() as u32;
+            }
+
+            for _ in sat_len..5 {
+                sat_name.push('X');
+            }
+
+            format!("{}{:02}{:03}", sat_name, year, doy)
+        }
     }
 
     /// Copies and returns new [DORIS] that is the result
     /// of ground station observation differentiation.
     /// See [Self::observations_substract_mut] for more information.
-    pub fn substract(&self, rhs: &Self) -> Result<Self, Error> {
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let parsed = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // basic example, this will produce a NULL DORIS.
+    /// // Standard use case is to use a synchronous observation of the
+    /// // same network.
+    /// let residuals = parsed.substract(&parsed);
+    ///
+    /// // dump
+    /// residuals.to_file("residuals.txt")
+    ///     .unwrap();
+    /// ```
+    pub fn substract(&self, rhs: &Self) -> Self {
         let mut s = self.clone();
-        s.substract_mut(rhs)?;
-        Ok(s)
+        s.substract_mut(rhs);
+        s
     }
 
-    /// TODO
-    pub fn substract_mut(&mut self, rhs: &Self) -> Result<(), Error> {
-        let lhs_dt = self
-            .dominant_sampling_period()
-            .ok_or(Error::UndeterminedSamplingRate)?;
+    /// Substract (in place) this [DORIS] file to another, creating
+    /// a "residual" [DORIS] file. All synchronous measurements of
+    /// matching stations are substracted to one another.
+    /// Satellite clock offset is preserved.
+    /// All other stations observations (non-synchronous, no remote counter part)
+    /// are dropped: you are left with residual content only after this operation.
+    pub fn substract_mut(&mut self, rhs: &Self) {
+        self.record.measurements.retain(|k, measurements| {
+            if let Some(rhs_measurements) = rhs.record.measurements.get(&k) {
+                measurements.observations.retain(|obs_k, observation| {
+                    if let Some(rhs_obs) = rhs_measurements.observations.get(&obs_k) {
+                        observation.value -= rhs_obs.value;
+                        true
+                    } else {
+                        false
+                    }
+                });
 
-        let half_lhs_dt = lhs_dt / 2.0;
-
+                !measurements.observations.is_empty()
+            } else {
+                false
+            }
+        });
         // if let Some(rhs) = rhs.record.as_obs() {
         //     if let Some(rec) = self.record.as_mut_obs() {
         //         rec.retain(|k, v| {
@@ -366,8 +669,6 @@ impl DORIS {
         //         });
         //     }
         // }
-
-        Ok(())
     }
 }
 

@@ -1,22 +1,4 @@
-//! Epoch parsing helper
-
 use crate::prelude::{Epoch, ParsingError, TimeScale};
-
-/// Formats given [Epoch] according to standard specifications.
-pub(crate) fn format(epoch: Epoch) -> String {
-    let (y, m, d, hh, mm, ss, nanos) = epoch_decompose(epoch);
-
-    format!(
-        "{:04} {:02} {:02} {:02} {:02} {:>2}.{:07}",
-        y,
-        m,
-        d,
-        hh,
-        mm,
-        ss,
-        nanos / 100,
-    )
-}
 
 /// Parses [Epoch] from string, interprated in [TimeScale]
 pub(crate) fn parse_in_timescale(content: &str, ts: TimeScale) -> Result<Epoch, ParsingError> {
@@ -127,15 +109,29 @@ pub(crate) fn parse_utc(s: &str) -> Result<Epoch, ParsingError> {
     parse_in_timescale(s, TimeScale::UTC)
 }
 
-pub(crate) fn epoch_decompose(epoch: Epoch) -> (i32, u8, u8, u8, u8, u8, u32) {
-    epoch.to_gregorian(epoch.time_scale)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
-
     use crate::prelude::{Epoch, TimeScale};
 
     use std::str::FromStr;
+
+    #[test]
+    fn epoch_parsing() {
+        for (epoch, expected) in [
+            (
+                "2018 06 13 00 00 33.179947800",
+                "2018-06-13T00:00:33.179947800 TAI",
+            ),
+            (
+                "2018 06 13 00 05 13.179947800",
+                "2018-06-13T00:05:13.179947800 TAI",
+            ),
+        ] {
+            let parsed = parse_in_timescale(epoch, TimeScale::TAI).unwrap();
+
+            let expected = Epoch::from_str(expected).unwrap();
+            assert_eq!(parsed, expected);
+        }
+    }
 }

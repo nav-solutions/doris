@@ -9,6 +9,9 @@ use std::io::Error as IoError;
 /// Errors that may rise when parsing DORIS files
 #[derive(Debug, Error)]
 pub enum ParsingError {
+    #[error("file I/O error: {0}")]
+    FileIO(#[from] std::io::Error),
+
     #[error("invalid doris file")]
     InvalidDoris,
 
@@ -72,10 +75,4 @@ pub enum ParsingError {
 pub enum FormattingError {
     #[error("i/o: output error")]
     OutputError(#[from] IoError),
-}
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("failed to determine sampling rate")]
-    UndeterminedSamplingRate,
 }

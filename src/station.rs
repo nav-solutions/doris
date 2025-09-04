@@ -104,9 +104,9 @@ impl GroundStation {
     pub fn matches<'a>(&self, matcher: &'a Matcher) -> bool {
         match matcher {
             Matcher::ID(code) => self.code == *code,
-            Matcher::Site(site) => self.site == *site,
+            Matcher::Site(site) => self.site.to_uppercase() == site.to_uppercase(),
             Matcher::DOMES(domes) => self.domes == *domes,
-            Matcher::Label(label) => self.label == *label,
+            Matcher::Label(label) => self.label.to_uppercase() == label.to_uppercase(),
         }
     }
 
@@ -161,10 +161,22 @@ impl std::str::FromStr for GroundStation {
 }
 
 impl std::fmt::Display for GroundStation {
+    /// Formats [GroundStation] verbosely
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "D{:02}  {} {:<29} {}  {}   {}",
+            "Station {} ({}/{}) (rev={}) (freq={})",
+            self.label, self.site, self.domes, self.beacon_revision, self.k_frequency_shift
+        )
+    }
+}
+
+impl std::fmt::LowerHex for GroundStation {
+    /// Formats [GroundStation] according to DORIS standards
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "D{:02}  {} {:<29} {}  {} {:3}",
             self.code,
             self.label,
             self.site,
@@ -221,10 +233,28 @@ mod test {
                     code: 17,
                 },
             ),
+            (
+                "D12  GR4B GRASSE                        10002S019  3 -15",
+                GroundStation {
+                    label: "GR4B".to_string(),
+                    site: "GRASSE".to_string(),
+                    domes: DOMES {
+                        area: 100,
+                        site: 02,
+                        sequential: 19,
+                        point: DOMESTrackingPoint::Instrument,
+                    },
+                    beacon_revision: 3,
+                    k_frequency_shift: -15,
+                    code: 12,
+                },
+            ),
         ] {
             let station = GroundStation::from_str(desc).unwrap();
             assert_eq!(station, expected, "station parsing error");
-            assert_eq!(station.to_string(), desc, "station reciprocal error");
+
+            let formatted = format!("{:x}", station);
+            assert_eq!(formatted, desc, "station reciprocal error");
         }
     }
 }
