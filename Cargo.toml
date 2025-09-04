@@ -30,7 +30,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 
 [dependencies]
 num = "0.4"
-strum = "0.26"
+strum = "0.27"
 thiserror = "2"
 num-derive = "0.4"
 itertools = "0.14.0"
