@@ -239,74 +239,166 @@ fn v3_cs2rx18164() {
                     }
                 }),
             },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::ClockOffset(ClockOffset::from_measured_offset(
+                    Duration::from_seconds(-4.326631626),
+                )),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 1,
+                        observable: l1,
+                        value: -596018.152,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 1,
+                        observable: w1,
+                        value: -128.150,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 1,
+                        observable: w2,
+                        value: -121.850,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 1,
+                        observable: moist,
+                        value: 81.602,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::ClockOffset(ClockOffset::from_measured_offset(
+                    Duration::from_seconds(-4.326631812),
+                )),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: l1,
+                        value: -66483.813,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: l1,
+                        value: -13103.231,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: w1,
+                        value: -132.7,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: w2,
+                        value: -122.55,
+                    }
+                }),
+            },
             // TestPoint {
-            //     epoch: Epoch::from_str("2018-06-13T00:00:36.179947800 TAI").unwrap(),
+            //     epoch: Epoch::from_str("2018-06-13T00:02:56.179947800 TAI").unwrap(),
             //     flag: EpochFlag::OK,
-            //     station_id: 1,
-            //     measurements: vec![
-            //         Measurement::ClockOffset(ClockOffset::from_measured_offset(
-            //             Duration::from_seconds(-4.326631626),
-            //         )),
-            //         Measurement::Observation((l1, Observation::default().with_value(-596018.152))),
-            //         Measurement::Observation((l2, Observation::default().with_value(-117432.973))),
-            //         Measurement::Observation((
-            //             c1,
-            //             Observation::default()
-            //                 .with_value(-139621890.289)
-            //                 .with_snr(SNR::DbHz12),
-            //         )),
-            //         Measurement::Observation((
-            //             c2,
-            //             Observation::default()
-            //                 .with_value(-139622137.639)
-            //                 .with_snr(SNR::DbHz12),
-            //         )),
-            //         Measurement::Observation((w1, Observation::default().with_value(-128.150))),
-            //         Measurement::Observation((w2, Observation::default().with_value(-121.850))),
-            //         Measurement::Observation((
-            //             f1f2,
-            //             Observation::default().with_value(169.370E-11),
-            //         )),
-            //         Measurement::Observation((press, Observation::default().with_value(1003.702))),
-            //         Measurement::Observation((temp, Observation::default().with_value(4.895))),
-            //         Measurement::Observation((moist, Observation::default().with_value(81.602))),
-            //     ],
-            // },
-            // TestPoint {
-            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-            //     flag: EpochFlag::OK,
-            //     station_id: 2,
-            //     measurements: vec![
-            //         Measurement::ClockOffset(ClockOffset::from_measured_offset(
-            //             Duration::from_seconds(-4.326631812),
-            //         )),
-            //         Measurement::Observation((l1, Observation::default().with_value(-66483.813))),
-            //         Measurement::Observation((l2, Observation::default().with_value(-13103.231))),
-            //     ],
-            // },
-            // TestPoint {
-            //     epoch: Epoch::from_str("2018-06-13T00:05:56.179947800 TAI").unwrap(),
-            //     flag: EpochFlag::OK,
-            //     station_id: 2,
-            //     measurements: vec![Measurement::ClockOffset(ClockOffset::from_measured_offset(
+            //     test_data: TestData::ClockOffset(ClockOffset::from_measured_offset(
             //         Duration::from_seconds(-4.326632168),
-            //     ))],
+            //     )),
             // },
-            // TestPoint {
-            //     epoch: Epoch::from_str("2018-06-13T00:05:56.179947800 TAI").unwrap(),
-            //     flag: EpochFlag::OK,
-            //     station_id: 3,
-            //     measurements: vec![Measurement::ClockOffset(ClockOffset::from_measured_offset(
-            //         Duration::from_seconds(-4.326632168),
-            //     ))],
-            // },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: l1,
+                        value: -1675820.378,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 2,
+                        observable: l2,
+                        value: -330235.679,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 3,
+                        observable: l1,
+                        value: -87906.919,
+                    }
+                }),
+            },
+            TestPoint {
+                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+                flag: EpochFlag::OK,
+                test_data: TestData::StationObservation({
+                    StationObservationData {
+                        station: 3,
+                        observable: l2,
+                        value: -17323.007,
+                    }
+                }),
+            },
         ],
     );
 
     // Easy to format new data
     doris.to_gzip_file("formatted.gz").unwrap();
 
-    // // // parse back
+    // // parse back
     // let parsed = DORIS::from_gzip_file("formatted.gz").unwrap_or_else(|e| {
     //     panic!("failed to parse 'formatted.gz' back: {}", e);
     // });
