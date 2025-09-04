@@ -42,7 +42,7 @@ impl Observation {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn default_flag() {

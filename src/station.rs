@@ -104,9 +104,9 @@ impl GroundStation {
     pub fn matches<'a>(&self, matcher: &'a Matcher) -> bool {
         match matcher {
             Matcher::ID(code) => self.code == *code,
-            Matcher::Site(site) => self.site == *site,
+            Matcher::Site(site) => self.site.to_uppercase() == site.to_uppercase(),
             Matcher::DOMES(domes) => self.domes == *domes,
-            Matcher::Label(label) => self.label == *label,
+            Matcher::Label(label) => self.label.to_uppercase() == label.to_uppercase(),
         }
     }
 

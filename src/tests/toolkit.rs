@@ -1,6 +1,4 @@
-use crate::prelude::{
-    ClockOffset, Epoch, EpochFlag, Key, Matcher, Observable, Observation, ObservationKey, DORIS,
-};
+use crate::prelude::{ClockOffset, Epoch, EpochFlag, Key, Observable, ObservationKey, DORIS};
 
 #[derive(Debug)]
 pub struct StationObservationData {

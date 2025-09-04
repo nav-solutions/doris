@@ -90,7 +90,7 @@ impl Record {
                         }
                     }
                 },
-                todo => {
+                _ => {
                     // TODO: events: not supported yet
                 },
             }

@@ -160,7 +160,7 @@ mod test {
         let formatted = default.to_string();
 
         let parsed = Observable::from_str(&formatted).unwrap_or_else(|e| {
-            panic!("Failed to parse observable from \"{}\"", formatted);
+            panic!("Failed to parse observable from \"{}\": {}", formatted, e);
         });
 
         assert_eq!(parsed, default);
