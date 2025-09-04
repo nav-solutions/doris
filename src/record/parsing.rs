@@ -81,9 +81,11 @@ impl Record {
 
                     if nth == 0 {
                         // parse date & time
-                        epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
+                        if line_len < MIN_EPOCH_SIZE {
+                            continue;
+                        }
 
-                        // println!("Epoch={}", epoch);
+                        epoch = parse_epoch_in_timescale(&line[2..2 + EPOCH_SIZE], TimeScale::TAI)?;
 
                         let mut measurement = Measurements::default();
 
@@ -244,7 +246,7 @@ impl Record {
                         }
                     }
                 } // epoch parsing
-            } // buf_len
+            } // new epoch
 
             // clear on new epoch detection
             if new_epoch {
@@ -254,7 +256,8 @@ impl Record {
 
             // always stack new content
             epoch_buf.push_str(&line_buf);
-            buf_len += line_len;
+            buf_len += size;
+
             line_buf.clear(); // always clear newline buf
 
             if eos {
