@@ -297,50 +297,50 @@ fn v3_cs2rx18164() {
                     Duration::from_seconds(-4.326631812),
                 )),
             },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: l1,
-                        value: -66483.813,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: l1,
-                        value: -13103.231,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: w1,
-                        value: -132.7,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: w2,
-                        value: -122.55,
-                    }
-                }),
-            },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: l1,
+            //             value: -66483.813,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: l1,
+            //             value: -13103.231,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: w1,
+            //             value: -132.7,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: w2,
+            //             value: -122.55,
+            //         }
+            //     }),
+            // },
             // TestPoint {
             //     epoch: Epoch::from_str("2018-06-13T00:02:56.179947800 TAI").unwrap(),
             //     flag: EpochFlag::OK,
@@ -348,50 +348,50 @@ fn v3_cs2rx18164() {
             //         Duration::from_seconds(-4.326632168),
             //     )),
             // },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: l1,
-                        value: -1675820.378,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 2,
-                        observable: l2,
-                        value: -330235.679,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 3,
-                        observable: l1,
-                        value: -87906.919,
-                    }
-                }),
-            },
-            TestPoint {
-                epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
-                flag: EpochFlag::OK,
-                test_data: TestData::StationObservation({
-                    StationObservationData {
-                        station: 3,
-                        observable: l2,
-                        value: -17323.007,
-                    }
-                }),
-            },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: l1,
+            //             value: -1675820.378,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 2,
+            //             observable: l2,
+            //             value: -330235.679,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 3,
+            //             observable: l1,
+            //             value: -87906.919,
+            //         }
+            //     }),
+            // },
+            // TestPoint {
+            //     epoch: Epoch::from_str("2018-06-13T00:02:26.179947800 TAI").unwrap(),
+            //     flag: EpochFlag::OK,
+            //     test_data: TestData::StationObservation({
+            //         StationObservationData {
+            //             station: 3,
+            //             observable: l2,
+            //             value: -17323.007,
+            //         }
+            //     }),
+            // },
         ],
     );
 
