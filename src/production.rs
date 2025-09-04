@@ -39,20 +39,22 @@ impl std::str::FromStr for ProductionAttributes {
 
         let name_len = filename.len();
 
-        if name_len != 12 && name_len != 15 {
+        if name_len != 10 && name_len != 13 {
             return Err(ParsingError::NonStandardFileName);
         }
 
-        let doy = 0;
-        let satellite = "Undefined".to_string();
+        let mut doy = 0;
+        let mut year = 2000;
 
-        let offset = filename.find('.').unwrap_or(0);
+        let satellite = filename[..5].to_string();
 
-        let agency = filename[..3].to_string();
+        if let Ok(y) = filename[5..7].parse::<u32>() {
+            year += y;
+        }
 
-        let year = filename[offset + 1..offset + 3]
-            .parse::<u32>()
-            .map_err(|_| ParsingError::NonStandardFileName)?;
+        if let Ok(day) = filename[7..10].parse::<u32>() {
+            doy = day;
+        }
 
         Ok(Self {
             satellite,
@@ -68,4 +70,22 @@ impl std::str::FromStr for ProductionAttributes {
 mod test {
     use super::*;
     use std::str::FromStr;
+
+    #[test]
+    #[cfg(feature = "flate2")]
+    fn test_prod_attributes() {
+        for (filename, sat_name, year, doy, gzip_compressed) in [
+            ("cs2rx18164", "CS2RX", 2018, 164, false),
+            ("cs2rx18164.gz", "CS2RX", 2018, 164, true),
+        ] {
+            let prod = ProductionAttributes::from_str(filename).unwrap_or_else(|e| {
+                panic!("Failed to \"{}\": {}", filename, e);
+            });
+
+            assert_eq!(prod.satellite, sat_name);
+            assert_eq!(prod.year, year);
+            assert_eq!(prod.doy, doy);
+            assert_eq!(prod.gzip_compressed, gzip_compressed);
+        }
+    }
 }

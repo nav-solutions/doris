@@ -197,20 +197,20 @@ impl DORIS {
             Some(filename) => {
                 let filename = filename.to_string_lossy().to_string();
                 if let Ok(prod) = ProductionAttributes::from_str(&filename) {
-                    prod
+                    Some(prod)
                 } else {
-                    ProductionAttributes::default()
+                    None
                 }
             },
-            _ => ProductionAttributes::default(),
+            _ => None,
         };
 
-        let fd = File::open(path).expect("from_file: open error");
+        let fd = File::open(path)?;
 
         let mut reader = BufReader::new(fd);
         let mut doris = Self::parse(&mut reader)?;
 
-        doris.production = Some(file_attributes);
+        doris.production = file_attributes;
 
         Ok(doris)
     }
@@ -236,21 +236,21 @@ impl DORIS {
             Some(filename) => {
                 let filename = filename.to_string_lossy().to_string();
                 if let Ok(prod) = ProductionAttributes::from_str(&filename) {
-                    prod
+                    Some(prod)
                 } else {
-                    ProductionAttributes::default()
+                    None
                 }
             },
-            _ => ProductionAttributes::default(),
+            _ => None,
         };
 
-        let fd = File::open(path).expect("from_file: open error");
+        let fd = File::open(path)?;
 
         let reader = GzDecoder::new(fd);
         let mut reader = BufReader::new(reader);
         let mut doris = Self::parse(&mut reader)?;
 
-        doris.production = Some(file_attributes);
+        doris.production = file_attributes;
 
         Ok(doris)
     }
@@ -315,6 +315,66 @@ impl DORIS {
         None // TODO
     }
 
+    /// Generates (guesses) a standardized (uppercase) filename from this actual [DORIS] data set.
+    /// This is particularly useful when initiated from a file that did not follow
+    /// standard naming conventions.
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// // parse standard file
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.standard_filename(), "CS2RX18164.gz");
+    ///
+    /// // Dump using random name
+    /// doris.to_file("example.txt")
+    ///     .unwrap();
+    ///
+    /// // parse back & use
+    /// let parsed = DORIS::from_file("example.txt")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    ///
+    /// // when coming from non standard names,
+    /// // all fields are deduced from actual content.
+    /// assert_eq!(parsed.standard_filename(), "CRYOS18164");
+    /// ```
+    pub fn standard_filename(&self) -> String {
+        let mut doy = 0;
+        let mut year = 0i32;
+        let mut extension = "".to_string();
+
+        let sat_len = self.header.satellite.len();
+        let mut sat_name = self.header.satellite[..std::cmp::min(sat_len, 5)].to_string();
+
+        if let Some(epoch) = self.header.time_of_first_observation {
+            year = epoch.year() - 2000;
+            doy = epoch.day_of_year().round() as u32;
+        }
+
+        if let Some(attributes) = &self.production {
+            doy = attributes.doy;
+            year = attributes.year as i32 - 2000;
+
+            let sat_len = attributes.satellite.len();
+            sat_name = String::from(&attributes.satellite[..std::cmp::min(sat_len, 5)]);
+
+            #[cfg(feature = "flate2")]
+            if attributes.gzip_compressed {
+                extension.push_str(".gz");
+            }
+        }
+
+        for i in sat_len..5 {
+            sat_name.push('X');
+        }
+
+        format!("{}{:02}{:03}{}", sat_name, year, doy, extension)
+    }
+
     /// Copies and returns new [DORIS] that is the result
     /// of ground station observation differentiation.
     /// See [Self::observations_substract_mut] for more information.
@@ -324,7 +384,10 @@ impl DORIS {
         Ok(s)
     }
 
-    /// TODO
+    /// Substract (in place) this [DORIS] file to another, creating
+    /// a "residual" [DORIS] file. All common and synchronous measurements
+    /// are substracted to one another, others are discarded and dropped
+    /// after this operation.
     pub fn substract_mut(&mut self, rhs: &Self) -> Result<(), Error> {
         let lhs_dt = self
             .dominant_sampling_period()

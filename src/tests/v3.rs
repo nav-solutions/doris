@@ -95,9 +95,7 @@ fn v3_cs2rx18164() {
 
     // Standard file naming convention.
     // This could help when generating data from scratch.
-    // assert_eq!(doris.standardized_filename(), "cs2rx18164");
-
-    // Example: retrieve site observation
+    assert_eq!(doris.standard_filename(), "CS2RX18164.gz");
 
     let (l1, l2) = (
         Observable::from_str("L1").unwrap(),
@@ -403,5 +401,8 @@ fn v3_cs2rx18164() {
         panic!("failed to parse 'formatted.gz' back: {}", e);
     });
 
-    // testbench
+    assert_eq!(parsed.header.satellite, "CRYOSAT-2");
+    assert_eq!(parsed.standard_filename(), "CRYOS18164");
+
+    // TODO testbench
 }
