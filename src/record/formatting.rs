@@ -18,7 +18,7 @@ impl Record {
         let num_observables = header.observables.len();
 
         // browse in chronological order
-        for (key, measurements) in self.measurements.iter() {
+        for (key, measurement) in self.measurements.iter() {
             let (year, month, day, hours, mins, secs, nanos) =
                 key.epoch.to_gregorian(key.epoch.time_scale);
 
@@ -29,16 +29,17 @@ impl Record {
             )?;
 
             // number of station at this epoch
-            let num_stations = measurements
+            let num_stations = measurement
                 .observations
                 .keys()
                 .map(|k| k.station.code)
                 .unique()
                 .count();
+
             write!(writer, "{:3}", num_stations)?;
 
             // conclude line with clock offset
-            if let Some(clock_offset) = measurements.satellite_clock_offset {
+            if let Some(clock_offset) = measurement.satellite_clock_offset {
                 write!(
                     writer,
                     "       {:.9} {}\n",
@@ -51,21 +52,31 @@ impl Record {
 
             match key.flag {
                 EpochFlag::OK | EpochFlag::PowerFailure => {
-                    // browse by station ID#
-                    for (nth_station, station) in header.ground_stations.iter().enumerate() {
-                        write!(writer, "D{:02}", station.code)?;
+                    for station_id in measurement
+                        .observations
+                        .keys()
+                        .map(|k| k.station.code)
+                        .unique()
+                        .sorted()
+                    {
+                        write!(writer, "D{:02}", station_id)?;
 
                         // following header specs
                         for (nth_observable, observable) in header.observables.iter().enumerate() {
-                            let obs_key = ObservationKey {
-                                observable: *observable,
-                                station: station.clone(),
-                            };
-
-                            if let Some(observation) = measurements.observations.get(&obs_key) {
+                            if let Some(observation) = measurement
+                                .observations
+                                .iter()
+                                .filter_map(|(k, v)| {
+                                    if k.station.code == station_id && k.observable == *observable {
+                                        Some(v)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .reduce(|k, _| k)
+                            {
                                 write!(writer, "{:14.3}  ", observation.value)?;
                             } else {
-                                // BLANK
                                 write!(writer, "                  ")?;
                             }
 
@@ -80,7 +91,7 @@ impl Record {
                     }
                 },
                 todo => {
-                    // TODO not supported yet
+                    // TODO: events: not supported yet
                 },
             }
         }
