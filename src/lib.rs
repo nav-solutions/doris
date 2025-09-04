@@ -226,6 +226,62 @@ impl DORIS {
     }
 
     /// Parses [DORIS] from local gzip compressed file.
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.header.satellite, "CRYOSAT-2");
+    ///
+    /// let agency = "CNES".to_string(); // Agency / producer
+    /// let program = "Expert".to_string(); // Software name
+    /// let run_by = "CNES".to_string(); // Operator
+    /// let date = "20180614 090016 UTC".to_string(); // Date of production
+    /// let observer = "SPA_BN1_4.7P1".to_string(); // Operator
+    ///
+    /// assert_eq!(doris.header.program, Some(program));
+    /// assert_eq!(doris.header.run_by, Some(run_by));
+    /// assert_eq!(doris.header.date, Some(date)); // currently not interpreted
+    /// assert_eq!(doris.header.observer, Some(observer));
+    /// assert_eq!(doris.header.agency, Some(agency));
+    ///
+    /// assert!(doris.header.doi.is_none());
+    /// assert!(doris.header.license.is_none());
+    ///
+    /// let observables = vec![
+    ///    Observable::UnambiguousPhaseRange(Frequency::DORIS1), // phase, in meters of prop.
+    ///    Observable::UnambiguousPhaseRange(Frequency::DORIS2),
+    ///    Observable::PseudoRange(Frequency::DORIS1), // decoded pseudo range
+    ///    Observable::PseudoRange(Frequency::DORIS2),
+    ///    Observable::Power(Frequency::DORIS1), // received power
+    ///    Observable::Power(Frequency::DORIS2), // received power
+    ///    Observable::FrequencyRatio,           // f1/f2 ratio (=drift image)
+    ///    Observable::Pressure,                 // pressure, at ground station level (hPa)
+    ///    Observable::Temperature,              // temperature, at ground station level (°C)
+    ///    Observable::HumidityRate,             // saturation rate, at ground station level (%)
+    /// ];
+    ///
+    /// assert_eq!(doris.header.observables, observables);
+    ///
+    /// assert_eq!(doris.header.ground_stations.len(), 53); // network
+    ///
+    /// // Stations helper
+    /// let site_matcher = Matcher::Site("TOULOUSE");
+    ///
+    /// let toulouse = GroundStation::default()
+    ///     .with_domes(DOMES::from_str("10003S005").unwrap())
+    ///     .with_site_name("TOULOUSE") // site name
+    ///     .with_site_label("TLSB")    // site label/mnemonic
+    ///     .with_unique_id(13)         // file dependent
+    ///     .with_frequency_shift(0)    // f1/f2 site shift for this day
+    ///     .with_beacon_revision(3);   // DORIS 3rd generation
+    ///
+    /// // helper
+    /// assert_eq!(doris.ground_station(site_matcher), Some(toulouse));
+    /// ```
     #[cfg(feature = "flate2")]
     #[cfg_attr(docsrs, doc(cfg(feature = "flate2")))]
     pub fn from_gzip_file<P: AsRef<Path>>(path: P) -> Result<DORIS, ParsingError> {
@@ -272,11 +328,13 @@ impl DORIS {
     /// into a single one. This is determined by the presence of a custom yet somewhat standardized Header comment.
     pub fn is_merged(&self) -> bool {
         let special_comment = String::from("FILE MERGE");
+
         for comment in self.header.comments.iter() {
             if comment.eq("FILE MERGE") {
                 return true;
             }
         }
+
         false
     }
 
@@ -291,6 +349,26 @@ impl DORIS {
     }
 
     /// Returns measurement satellite [ClockOffset] [Iterator] for all Epochs, in chronological order
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// assert_eq!(doris.header.satellite, "CRYOSAT-2");
+    ///
+    /// for (i, (epoch, clock_offset)) in doris.satellite_clock_offset_iter().enumerate() {
+    ///
+    ///     assert_eq!(clock_offset.extrapolated, false); // actual measurement
+    ///
+    ///     if i == 0 {
+    ///         assert_eq!(clock_offset.offset.to_seconds(), -4.326631626);
+    ///     } else if i == 10 {
+    ///         assert_eq!(clock_offset.offset.to_seconds(), -4.326631711);
+    ///     }
+    /// }
+    /// ```
     pub fn satellite_clock_offset_iter(
         &self,
     ) -> Box<dyn Iterator<Item = (Epoch, ClockOffset)> + '_> {
@@ -309,10 +387,70 @@ impl DORIS {
         )
     }
 
+    /// Returns histogram analysis of the sampling period, as ([Duration], population [usize]) tuple.
+    /// ```
+    /// use doris_rs::prelude::*;
+    /// use itertools::Itertools;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // requires more than 2 measurements
+    /// let (sampling_period, population) = doris.sampling_histogram()
+    ///     .sorted()
+    ///     .nth(0) // dominant
+    ///     .unwrap();
+    ///
+    /// assert_eq!(sampling_period, Duration::from_seconds(3.0));
+    /// ```
+    pub fn sampling_histogram(&self) -> Box<dyn Iterator<Item = (Duration, usize)> + '_> {
+        Box::new(
+            self.record
+                .epochs_iter()
+                .zip(self.record.epochs_iter().skip(1))
+                .map(|((ek_1, _), (ek_2, _))| ek_2 - ek_1)
+                .fold(vec![], |mut list, dt| {
+                    let mut found = false;
+
+                    for (delta, pop) in list.iter_mut() {
+                        if *delta == dt {
+                            *pop += 1;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if !found {
+                        list.push((dt, 1));
+                    }
+
+                    list
+                })
+                .into_iter(),
+        )
+    }
+
     /// Studies actual measurement rate and returns the highest
     /// value in the histogram as the dominant sampling rate
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    /// use itertools::Itertools;
+    ///
+    /// let doris = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // requires more than 2 measurements
+    /// let sampling_period = doris.dominant_sampling_period()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(sampling_period, Duration::from_seconds(3.0));
+    /// ```
     pub fn dominant_sampling_period(&self) -> Option<Duration> {
-        None // TODO
+        self.sampling_histogram()
+            .sorted()
+            .map(|(dt, _)| dt)
+            .reduce(|k, _| k)
     }
 
     /// Generates (guesses) a standardized (uppercase) filename from this actual [DORIS] data set.
