@@ -76,9 +76,3 @@ pub enum FormattingError {
     #[error("i/o: output error")]
     OutputError(#[from] IoError),
 }
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("failed to determine sampling rate")]
-    UndeterminedSamplingRate,
-}

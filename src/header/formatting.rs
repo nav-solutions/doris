@@ -1,11 +1,6 @@
 use crate::{fmt_comment, fmt_doris, header::Header, prelude::FormattingError};
 
-use std::{
-    io::{BufWriter, Write},
-    str::FromStr,
-};
-
-use hifitime::efmt::{Format, Formatter};
+use std::io::{BufWriter, Write};
 
 impl Header {
     /// Formats [Header] into [Write]able interface, using efficient buffering.

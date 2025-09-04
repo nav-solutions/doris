@@ -146,6 +146,12 @@ impl Header {
                 if lic.len() > 0 {
                     license = Some(lic.to_string());
                 }
+            } else if marker.eq("DOI") {
+                let content = content.split_at(40).0.trim();
+
+                if content.len() > 0 {
+                    doi = Some(content.to_string());
+                }
             } else if marker.eq("ANT # / TYPE") {
                 let (sn, rem) = content.split_at(20);
                 let (model, _) = rem.split_at(20);

@@ -1,10 +1,7 @@
 #[cfg(doc)]
 use crate::prelude::{TimeScale, DORIS};
 
-use crate::{
-    error::ParsingError,
-    prelude::{ClockOffset, Duration, GroundStation, Matcher, Observable, Observation},
-};
+use crate::prelude::{ClockOffset, GroundStation, Matcher, Observable, Observation};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

@@ -4,13 +4,13 @@ use crate::{
     epoch::parse_in_timescale as parse_epoch_in_timescale,
     error::ParsingError,
     prelude::{
-        ClockOffset, Comments, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher,
-        Measurements, Observable, Observation, Record, TimeScale, SNR,
+        ClockOffset, Duration, Epoch, EpochFlag, GroundStation, Header, Key, Matcher, Measurements,
+        Observable, Observation, Record, TimeScale, SNR,
     },
 };
 
-// #[cfg(feature = "log")]
-// use log::{error, debug};
+#[cfg(feature = "log")]
+use log::{debug, error};
 
 impl Record {
     /// Parses the DORIS [Record] content by consuming the [Reader] until the end of stream.
@@ -131,26 +131,21 @@ impl Record {
                             {
                                 station = Some(matching);
                             } else {
-                                #[cfg(feature = "logs")]
+                                #[cfg(feature = "log")]
                                 debug!("unidentified station: #{:02}", station_id);
                             }
                         }
 
                         // station must be identified
                         if let Some(station) = station {
-                            // println!("line={} station={:?}", nth, station);
-
                             // identified
                             let key = Key { epoch, flag };
 
                             let mut offset = 3;
 
                             loop {
-                                // println!("obs_ptr={}", obs_ptr);
-
                                 if offset + OBSERVABLE_WIDTH + 1 < line_len {
                                     let slice = &line[offset..offset + OBSERVABLE_WIDTH];
-                                    // println!("slice \"{}\"", slice);
 
                                     match slice.trim().parse::<f64>() {
                                         Ok(mut value) => {
@@ -185,9 +180,12 @@ impl Record {
                                                     .insert(key.clone(), measurements);
                                             }
                                         },
+                                        #[cfg(feature = "log")]
                                         Err(e) => {
-                                            println!("observation parsing error: {}", e);
+                                            error!("observation parsing error: {}", e);
                                         },
+                                        #[cfg(not(feature = "log"))]
+                                        Err(_) => {},
                                     }
                                 }
 

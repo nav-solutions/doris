@@ -30,9 +30,13 @@ impl TestPoint {
     }
 }
 
-// /// Runs strict equality comparison, panics on any failure
-// pub fn doris_comparison(dut: &DORIS, model: &DORIS) {
-// }
+pub fn is_null_doris(dut: &DORIS) {
+    for (k, measurement) in dut.record.measurements.iter() {
+        for (obs_k, observation) in measurement.observations.iter() {
+            assert_eq!(observation.value, 0.0);
+        }
+    }
+}
 
 /// Tests all data points in this [DORIS] record
 pub fn testbench(dut: &DORIS, testpoints: Vec<TestPoint>) {

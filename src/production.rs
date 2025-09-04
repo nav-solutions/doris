@@ -20,14 +20,41 @@ pub struct ProductionAttributes {
 }
 
 impl std::fmt::Display for ProductionAttributes {
-    #[cfg(feature = "flate2")]
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        Ok(())
-    }
-
     #[cfg(not(feature = "flate2"))]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        Ok(())
+        let sat_len = self.satellite.len();
+        let mut sat_name = self.satellite[..std::cmp::min(sat_len, 5)].to_string();
+
+        for i in sat_len..5 {
+            sat_name.push('X');
+        }
+
+        write!(f, "{}{:02}{:03}", sat_name, self.year - 2000, self.doy)
+    }
+
+    #[cfg(feature = "flate2")]
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let sat_len = self.satellite.len();
+        let mut sat_name = self.satellite[..std::cmp::min(sat_len, 5)].to_string();
+
+        for i in sat_len..5 {
+            sat_name.push('X');
+        }
+
+        let mut extension = "".to_string();
+
+        if self.gzip_compressed {
+            extension.push_str(".gz");
+        }
+
+        write!(
+            f,
+            "{}{:02}{:03}{}",
+            sat_name,
+            self.year - 2000,
+            self.doy,
+            extension
+        )
     }
 }
 

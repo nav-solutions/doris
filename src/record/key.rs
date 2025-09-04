@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(doc)]
 use crate::prelude::Measurements;
 
-use crate::prelude::{Epoch, EpochFlag, GroundStation};
+use crate::prelude::{Epoch, EpochFlag};
 
 /// [Key] is used to store [GroundStation]s [Measurements] uniquely.
 #[derive(Clone, Debug, Default, PartialEq, PartialOrd, Eq, Ord, Hash)]

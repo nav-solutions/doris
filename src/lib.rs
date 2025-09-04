@@ -53,10 +53,9 @@ use flate2::{read::GzDecoder, write::GzEncoder, Compression as GzCompression};
 use hifitime::prelude::{Duration, Epoch};
 
 use crate::{
-    error::{Error, FormattingError, ParsingError},
+    error::{FormattingError, ParsingError},
     header::Header,
     matcher::Matcher,
-    observable::Observable,
     production::ProductionAttributes,
     record::{ClockOffset, Record},
     station::GroundStation,
@@ -359,8 +358,6 @@ impl DORIS {
     /// Determines whether this structure results of combining several structures
     /// into a single one. This is determined by the presence of a custom yet somewhat standardized Header comment.
     pub fn is_merged(&self) -> bool {
-        let special_comment = String::from("FILE MERGE");
-
         for comment in self.header.comments.iter() {
             if comment.eq("FILE MERGE") {
                 return true;
@@ -513,41 +510,48 @@ impl DORIS {
     /// assert_eq!(parsed.standard_filename(), "CRYOS18164");
     /// ```
     pub fn standard_filename(&self) -> String {
-        let mut doy = 0;
-        let mut year = 0i32;
-        let mut extension = "".to_string();
-
-        let sat_len = self.header.satellite.len();
-        let mut sat_name = self.header.satellite[..std::cmp::min(sat_len, 5)].to_string();
-
-        if let Some(epoch) = self.header.time_of_first_observation {
-            year = epoch.year() - 2000;
-            doy = epoch.day_of_year().round() as u32;
-        }
-
         if let Some(attributes) = &self.production {
-            doy = attributes.doy;
-            year = attributes.year as i32 - 2000;
+            attributes.to_string()
+        } else {
+            let mut doy = 0;
+            let mut year = 0i32;
+            let mut extension = "".to_string();
 
-            let sat_len = attributes.satellite.len();
-            sat_name = String::from(&attributes.satellite[..std::cmp::min(sat_len, 5)]);
+            let sat_len = self.header.satellite.len();
+            let mut sat_name = self.header.satellite[..std::cmp::min(sat_len, 5)].to_string();
 
-            #[cfg(feature = "flate2")]
-            if attributes.gzip_compressed {
-                extension.push_str(".gz");
+            if let Some(epoch) = self.header.time_of_first_observation {
+                year = epoch.year() - 2000;
+                doy = epoch.day_of_year().round() as u32;
             }
-        }
 
-        for i in sat_len..5 {
-            sat_name.push('X');
-        }
+            for i in sat_len..5 {
+                sat_name.push('X');
+            }
 
-        format!("{}{:02}{:03}{}", sat_name, year, doy, extension)
+            format!("{}{:02}{:03}{}", sat_name, year, doy, extension)
+        }
     }
 
     /// Copies and returns new [DORIS] that is the result
     /// of ground station observation differentiation.
     /// See [Self::observations_substract_mut] for more information.
+    ///
+    /// ```
+    /// use doris_rs::prelude::*;
+    ///
+    /// let parsed = DORIS::from_gzip_file("data/DOR/V3/cs2rx18164.gz")
+    ///     .unwrap();
+    ///
+    /// // basic example, this will produce a NULL DORIS.
+    /// // Standard use case is to use a synchronous observation of the
+    /// // same network.
+    /// let residuals = parsed.substract(&parsed);
+    ///
+    /// // dump
+    /// residuals.to_file("residuals.txt")
+    ///     .unwrap();
+    /// ```
     pub fn substract(&self, rhs: &Self) -> Self {
         let mut s = self.clone();
         s.substract_mut(rhs);

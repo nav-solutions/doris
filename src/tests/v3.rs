@@ -393,7 +393,9 @@ fn v3_cs2rx18164() {
         ],
     );
 
-    // dummy test bench
+    // basic test bench
+    let residual = doris.substract(&doris);
+    is_null_doris(&residual);
 
     // Easy to format new data
     doris.to_gzip_file("formatted.gz").unwrap();

@@ -1,16 +1,10 @@
 #[cfg(doc)]
 use crate::prelude::{GroundStation, TimeScale, DORIS};
 
-use crate::{
-    error::ParsingError,
-    prelude::{Duration, Observable, Observation},
-};
+use crate::prelude::Duration;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-
-use itertools::Itertools;
-use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Eq, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
