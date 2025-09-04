@@ -37,9 +37,6 @@ impl Record {
 
         let mut record = Record::default();
 
-        let mut obs_ptr = 0;
-        let mut line_offset = 0;
-
         let observables = &header.observables;
         let nb_observables = observables.len();
 
@@ -72,7 +69,7 @@ impl Record {
 
                 let mut obs_ptr = 0;
                 let mut epoch = Epoch::default();
-                let mut flag = EpochFlag::default();
+                let flag = EpochFlag::default();
                 let mut station = Option::<&GroundStation>::None;
                 let mut clock_offset = Option::<ClockOffset>::None;
 
@@ -212,7 +209,7 @@ impl Record {
                                 offset += 1;
 
                                 if offset + 1 < line_len {
-                                    let slice = &line[offset..offset + 1];
+                                    // let slice = &line[offset..offset + 1];
                                     // println!("slice \"{}\"", slice);
 
                                     // if let Ok(flag) = slice.trim().parse::<Flag>() {

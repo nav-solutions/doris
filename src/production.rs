@@ -25,7 +25,7 @@ impl std::fmt::Display for ProductionAttributes {
         let sat_len = self.satellite.len();
         let mut sat_name = self.satellite[..std::cmp::min(sat_len, 5)].to_string();
 
-        for i in sat_len..5 {
+        for _ in sat_len..5 {
             sat_name.push('X');
         }
 
@@ -37,7 +37,7 @@ impl std::fmt::Display for ProductionAttributes {
         let sat_len = self.satellite.len();
         let mut sat_name = self.satellite[..std::cmp::min(sat_len, 5)].to_string();
 
-        for i in sat_len..5 {
+        for _ in sat_len..5 {
             sat_name.push('X');
         }
 

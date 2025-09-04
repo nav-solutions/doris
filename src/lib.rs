@@ -525,7 +525,7 @@ impl DORIS {
                 doy = epoch.day_of_year().round() as u32;
             }
 
-            for i in sat_len..5 {
+            for _ in sat_len..5 {
                 sat_name.push('X');
             }
 

@@ -51,8 +51,8 @@ impl Record {
         Box::new(
             self.measurements
                 .iter()
-                .flat_map(move |(k, measurements)| {
-                    measurements.observations.iter().filter_map(move |(k, v)| {
+                .flat_map(move |(_, measurements)| {
+                    measurements.observations.iter().filter_map(move |(k, _)| {
                         if k.station.matches(&matcher) {
                             Some(k.observable)
                         } else {
