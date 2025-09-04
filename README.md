@@ -3,8 +3,8 @@ DORIS
 
 [![Rust](https://github.com/nav-solutions/doris/actions/workflows/rust.yml/badge.svg)](https://github.com/nav-solutions/doris/actions/workflows/rust.yml)
 [![Rust](https://github.com/nav-solutions/doris/actions/workflows/daily.yml/badge.svg)](https://github.com/nav-solutions/doris/actions/workflows/daily.yml)
-[![crates.io](https://docs.rs/doris/badge.svg)](https://docs.rs/doris/)
-[![crates.io](https://img.shields.io/crates/d/doris.svg)](https://crates.io/crates/doris)
+[![crates.io](https://docs.rs/doris-rs/badge.svg)](https://docs.rs/doris-rs/)
+[![crates.io](https://img.shields.io/crates/d/doris-rs.svg)](https://crates.io/crates/doris-rs)
 
 [![MRSV](https://img.shields.io/badge/MSRV-1.82.0-orange?style=for-the-badge)](https://github.com/rust-lang/rust/releases/tag/1.82.0)
 [![License](https://img.shields.io/badge/license-MPL_2.0-orange?style=for-the-badge&logo=mozilla)](https://github.com/nav-solutions/doris/blob/main/LICENSE)
