@@ -568,7 +568,6 @@ impl DORIS {
         } else {
             let mut doy = 0;
             let mut year = 0i32;
-            let mut extension = "".to_string();
 
             let sat_len = self.header.satellite.len();
             let mut sat_name = self.header.satellite[..std::cmp::min(sat_len, 5)].to_string();
@@ -582,7 +581,7 @@ impl DORIS {
                 sat_name.push('X');
             }
 
-            format!("{}{:02}{:03}{}", sat_name, year, doy, extension)
+            format!("{}{:02}{:03}", sat_name, year, doy)
         }
     }
 
