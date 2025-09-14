@@ -24,11 +24,9 @@ References:
 - DORIS format
 
 NB: this parser is limited to the DORIS format exclusively, 
-her RINEX like formats have their own parser:
-  - [RINEX (obs, meteo, nav, clock)](https://github.com/nav-solutions/doris)
+other RINEX formats have their own parser:
+  - [RINEX (Meteo, Navigation, Clock, Observations, CRINEX)](https://github.com/nav-solutions/rinex)
   - [IONEX (Ionosphere) Maps](https://github.com/nav-solutions/ionex)
-
-NB: file formatting is work in progress and should be soon validated.
 
 To contribute or join our community, you may:
 
