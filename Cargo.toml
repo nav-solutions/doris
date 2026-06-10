@@ -25,28 +25,28 @@ rustdoc-args = ["--cfg", "docrs", "--generate-link-to-definition"]
 default = ["flate2"] # gzip files supported by default
 
 [build-dependencies]
-serde_json = { version = "1.0", features = ["preserve_order"] }
-serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
 
 [dependencies]
 num = "0.4"
-strum = "0.27"
+strum = "0.28"
 thiserror = "2"
 num-derive = "0.4"
-itertools = "0.14.0"
-num-integer = "0.1.44" # TODO: see if we can get rid of .div_ceil()
+itertools = "0.14"
+num-integer = "0.1" # TODO: see if we can get rid of .div_ceil()
 flate2 = { version = "1", optional = true }
-bitflags = { version = "2.3", features = ["serde"] } 
-hifitime = { version = "4.1", features = ["serde", "std"] }
-gnss-rs = { version = "2.4", features = ["serde", "domes", "cospar"] }
-serde = { version = "1.0", optional = true, default-features = false, features = ["derive"] }
+bitflags = { version = "2.13", features = ["serde"] } 
+hifitime = { version = "4", features = ["serde", "std"] }
+gnss-rs = { version = "2", features = ["serde", "domes", "cospar"] }
+serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
 
 # Unlock parsing logs
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
 flate2 = "1"
-rand = "0.9.2"
+rand = "0.9"
 serde_json = "1"
-criterion = "0.7"
+criterion = "0.8"
 env_logger = "0.11"
